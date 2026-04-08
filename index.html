@@ -43,9 +43,18 @@
   <header class="site-header">
     <div class="logo">
       <span class="logo-icon">◈</span>
-      <span class="logo-text">Open<em>Trad</em></span>
+      <div class="logo-group">
+        <span class="logo-text">Open<em>Trad</em></span>
+        <span class="logo-tagline" data-i18n="heroSub">Correction orthographique · Triple API · Hors-ligne · Glisser-déposer</span>
+      </div>
     </div>
     <div class="header-actions">
+      <!-- Focus mode -->
+      <button id="focusBtn" class="icon-btn" title="Mode concentration" aria-label="Mode concentration" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+        </svg>
+      </button>
       <!-- History -->
       <button id="historyBtn" class="icon-btn" title="Historique des traductions" aria-label="Voir l'historique">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -79,12 +88,12 @@
   <!-- ══════════════════════════════════════════
        HERO
   ══════════════════════════════════════════ -->
-  <section class="hero">
+  <section class="hero" id="heroSection">
     <h1 class="hero-title">
       <span data-i18n="heroTitle">Traduisez</span>
       <span class="accent" data-i18n="heroAccent"> instantanément</span>
     </h1>
-    <p class="hero-sub" data-i18n="heroSub">Correction orthographique · Triple API · Hors-ligne · Glisser-déposer</p>
+    <span class="hero-dismiss-hint" aria-hidden="true">✕</span>
   </section>
 
   <!-- ══════════════════════════════════════════
@@ -104,6 +113,12 @@
        MAIN TRANSLATOR
   ══════════════════════════════════════════ -->
   <main class="translator-wrap" id="dropZone">
+    <!-- Focus mode exit button (visible only in focus-mode) -->
+    <button id="focusCloseBtn" class="focus-close-btn" title="Quitter le mode concentration" aria-label="Quitter le mode concentration">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
     <!-- ── Source Panel ── -->
     <section class="panel panel--source">
       <div class="panel-header">
@@ -130,6 +145,13 @@
           <option value="id">🇮🇩 Indonésien</option>
         </select>
         <div class="panel-actions">
+          <!-- Font size toggle -->
+          <button id="fontSizeBtn" class="icon-btn icon-btn--small" title="Agrandir le texte" aria-label="Changer la taille du texte" data-size="normal">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <path d="M3 18h5.5l1-2.5h3l1 2.5H19v-1.5l-4.5-11H9.5L5 16.5H3V18zm7.5-5l1-3 1 3h-2z" opacity=".5"/>
+              <path d="M14 20h8v-1.5l-2-5h-4l-2 5V20zm3-4.5.8 2.5h-1.6l.8-2.5z"/>
+            </svg>
+          </button>
           <!-- Spell check -->
           <button id="spellBtn" class="icon-btn icon-btn--small active" title="Correction orthographique (LanguageTool)" aria-label="Activer/désactiver la correction">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -174,8 +196,9 @@
 
       <div class="panel-footer">
         <span id="charCount" class="char-count">0 / 5000</span>
-        <span id="spellStatus" class="spell-status"></span>
+        <button id="spellStatus" class="spell-status" type="button" aria-expanded="false" aria-controls="spellPanel"></button>
       </div>
+      <div id="spellPanel" class="spell-panel" aria-hidden="true"></div>
 
       <div id="spellTooltip" class="spell-tooltip" role="tooltip"></div>
     </section>
@@ -233,6 +256,13 @@
               <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
             </svg>
           </button>
+          <!-- Share -->
+          <button id="shareBtn" class="icon-btn icon-btn--small" title="Partager la traduction" aria-label="Partager la traduction">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </button>
           <!-- Copy -->
           <button id="copyBtn" class="icon-btn icon-btn--small" title="Copier la traduction" aria-label="Copier la traduction">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -274,6 +304,7 @@
         <span data-i18n="historyTitle">10 dernières traductions</span>
       </h2>
       <div class="history-header-actions">
+        <button id="exportHistoryBtn" class="btn-text" aria-label="Exporter l'historique" title="Exporter en JSON">⬇ Export</button>
         <button id="clearHistoryBtn" class="btn-text" aria-label="Effacer l'historique" data-i18n="clearHistory">Tout effacer</button>
         <button id="closeHistoryBtn" class="icon-btn" aria-label="Fermer l'historique">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">

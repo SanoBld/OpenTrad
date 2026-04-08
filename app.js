@@ -37,6 +37,13 @@ const formatToggle    = document.getElementById("formatToggle");
 const connToast    = document.getElementById("connToast");
 const connToastMsg = document.getElementById("connToastMsg");
 
+// New buttons
+const shareBtn         = document.getElementById("shareBtn");
+const exportHistoryBtn = document.getElementById("exportHistoryBtn");
+const focusBtn         = document.getElementById("focusBtn");
+const focusCloseBtn    = document.getElementById("focusCloseBtn");
+const fontSizeBtn      = document.getElementById("fontSizeBtn");
+
 // History
 const historyBtn      = document.getElementById("historyBtn");
 const historyPanel    = document.getElementById("historyPanel");
@@ -50,6 +57,7 @@ const historyEmpty    = document.getElementById("historyEmpty");
 const spellBtn        = document.getElementById("spellBtn");
 const spellOverlay    = document.getElementById("spellOverlay");
 const spellStatus     = document.getElementById("spellStatus");
+const spellPanel      = document.getElementById("spellPanel");
 const spellTooltip    = document.getElementById("spellTooltip");
 
 // Drop / upload
@@ -432,19 +440,17 @@ async function checkInitialConnection() {
   const t  = getConnStrings();
   const ok = await pingConnection();
   if (ok) showConnToast("connected", t.connected, true);
-  else    showConnToast("offline", t.offline, false);
+  // offline pill supprimée
 }
 
 window.addEventListener("offline", () => {
-  const t = getConnStrings();
-  showConnToast("offline", t.connLost, false);
+  // pillule hors-ligne supprimée — pas de notification
 });
 
 window.addEventListener("online", async () => {
   const t  = getConnStrings();
   const ok = await pingConnection();
   if (ok) showConnToast("connected", t.connRestored, true);
-  else    showConnToast("offline", t.offline, false);
 });
 
 /* ----------------------------------------------------------
@@ -640,6 +646,8 @@ clearBtn.addEventListener("click", () => {
   clearTimeout(debounceTimer);
   clearSpellOverlay();
   spellStatus.textContent = "";
+  spellStatus.classList.remove("has-errors");
+  spellStatus.setAttribute("aria-expanded", "false");
   sourceText.focus();
 });
 
@@ -722,6 +730,12 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     if (historyPanel.classList.contains("open"))  closeHistory();
     if (settingsModal.classList.contains("open")) closeSettings();
+    if (document.body.classList.contains("focus-mode")) toggleFocusMode();
+  }
+  // Ctrl+Shift+S → swap languages
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "s") {
+    e.preventDefault();
+    swapBtn.click();
   }
 });
 
@@ -922,12 +936,18 @@ async function checkSpelling(text) {
 
     if (spellErrors.length === 0) {
       spellStatus.textContent = "✓ Aucune erreur";
+      spellStatus.classList.remove("has-errors");
+      spellPanel.innerHTML = "";
+      spellPanel.setAttribute("aria-hidden", "true");
+      spellStatus.setAttribute("aria-expanded", "false");
       setTimeout(() => { spellStatus.textContent = ""; }, 3000);
     } else {
       const parts = [];
       if (errorCount > 0) parts.push(`${errorCount} faute${errorCount > 1 ? "s" : ""}`);
       if (warnCount  > 0) parts.push(`${warnCount} suggestion${warnCount > 1 ? "s" : ""}`);
       spellStatus.textContent = "⚠ " + parts.join(", ");
+      spellStatus.classList.add("has-errors");
+      renderSpellPanel(text, spellErrors);
     }
   } catch (err) {
     spellStatus.textContent = "";
@@ -959,6 +979,7 @@ function renderSpellOverlay(text, errors) {
     html += escapeHtml(text.slice(cursor, err.offset));
     const word = text.slice(err.offset, err.offset + err.length);
     const cls  = err.type === "misspelling" ? "err-error"
+               : err.type === "grammar"     ? "err-accord"
                : err.type === "style"       ? "err-style"
                :                              "err-warning";
     html += `<mark class="${cls}" data-err="${sorted.indexOf(err)}">${escapeHtml(word)}</mark>`;
@@ -969,29 +990,135 @@ function renderSpellOverlay(text, errors) {
 
   spellOverlay.querySelectorAll("mark[data-err]").forEach(mark => {
     mark.addEventListener("mouseenter", (e) => showSpellTooltip(e, mark));
-    mark.addEventListener("mouseleave", hideSpellTooltip);
+    mark.addEventListener("mouseleave", () => {
+      if (!spellTooltip.classList.contains("interactive")) hideSpellTooltip();
+    });
+    mark.addEventListener("click", (e) => {
+      e.stopPropagation();
+      showSpellTooltip(e, mark, true);
+    });
   });
 }
 
-function showSpellTooltip(e, mark) {
+function showSpellTooltip(e, mark, interactive = false) {
   const idx    = parseInt(mark.dataset.err, 10);
   const sorted = [...spellErrors].sort((a, b) => a.offset - b.offset);
   const err    = sorted[idx];
   if (!err) return;
   let html = `<strong>${err.message}</strong>`;
   if (err.suggestions.length > 0) {
-    html += `<br><span style="color:var(--accent-3)">→ ${err.suggestions.join(" · ")}</span>`;
+    if (interactive) {
+      html += `<div class="spell-suggestions">`;
+      err.suggestions.forEach(s => {
+        html += `<button class="spell-suggestion" data-offset="${err.offset}" data-length="${err.length}" data-value="${escapeHtml(s)}">${escapeHtml(s)}</button>`;
+      });
+      html += `</div>`;
+    } else {
+      html += `<br><span style="color:var(--accent-3)">→ ${err.suggestions.join(" · ")}</span>`;
+    }
   }
   spellTooltip.innerHTML = html;
+  spellTooltip.classList.toggle("interactive", interactive);
   spellTooltip.classList.add("visible");
 }
 
-function hideSpellTooltip() { spellTooltip.classList.remove("visible"); }
-function clearSpellOverlay() { spellOverlay.innerHTML = ""; spellErrors = []; }
+function hideSpellTooltip() { spellTooltip.classList.remove("visible", "interactive"); }
+function clearSpellOverlay() {
+  spellOverlay.innerHTML = "";
+  spellErrors = [];
+  spellPanel.innerHTML = "";
+  spellPanel.setAttribute("aria-hidden", "true");
+  if (spellStatus) spellStatus.setAttribute("aria-expanded", "false");
+}
+
+function renderSpellPanel(text, errors) {
+  if (!errors || errors.length === 0) {
+    spellPanel.innerHTML = "";
+    spellPanel.setAttribute("aria-hidden", "true");
+    return;
+  }
+  const sorted = [...errors].sort((a, b) => a.offset - b.offset);
+  let html = `<ul class="spell-panel-list">`;
+  sorted.forEach((err, idx) => {
+    const word = escapeHtml(text.slice(err.offset, err.offset + err.length));
+    const cls  = err.type === "misspelling" ? "spe-error"
+               : err.type === "grammar"     ? "spe-accord"
+               : err.type === "style"       ? "spe-style"
+               :                              "spe-warn";
+    const suggestions = err.suggestions.map(s =>
+      `<button class="spell-fix-btn" data-offset="${err.offset}" data-length="${err.length}" data-value="${escapeHtml(s)}">${escapeHtml(s)}</button>`
+    ).join("");
+    html += `<li class="spell-panel-item">
+      <span class="spe-badge ${cls}">${word}</span>
+      <span class="spe-msg">${escapeHtml(err.message)}</span>
+      ${suggestions ? `<span class="spe-fixes">${suggestions}</span>` : ""}
+    </li>`;
+  });
+  html += `</ul>`;
+  spellPanel.innerHTML = html;
+
+  // Toggle visibility based on current aria state
+  const isOpen = spellStatus.getAttribute("aria-expanded") === "true";
+  spellPanel.setAttribute("aria-hidden", String(!isOpen));
+  spellPanel.classList.toggle("open", isOpen);
+
+  // Fix buttons
+  spellPanel.querySelectorAll(".spell-fix-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const offset = parseInt(btn.dataset.offset, 10);
+      const length = parseInt(btn.dataset.length, 10);
+      const value  = btn.dataset.value;
+      const t      = sourceText.value;
+      sourceText.value = t.slice(0, offset) + value + t.slice(offset + length);
+      updateCharCount();
+      clearSpellOverlay();
+      spellStatus.textContent = "";
+      clearTimeout(spellDebounceTimer);
+      spellDebounceTimer = setTimeout(() => checkSpelling(sourceText.value), 300);
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(translate, DEBOUNCE_MS);
+    });
+  });
+}
+
+// Toggle spell panel on spellStatus click
+spellStatus.addEventListener("click", () => {
+  if (!spellStatus.classList.contains("has-errors")) return;
+  const isOpen = spellStatus.getAttribute("aria-expanded") === "true";
+  spellStatus.setAttribute("aria-expanded", String(!isOpen));
+  spellPanel.setAttribute("aria-hidden", String(isOpen));
+  spellPanel.classList.toggle("open", !isOpen);
+});
 
 // Sync spell overlay scroll with textarea
 sourceText.addEventListener("scroll", () => {
   spellOverlay.scrollTop = sourceText.scrollTop;
+});
+
+// Apply correction on suggestion click
+spellTooltip.addEventListener("click", (e) => {
+  const btn = e.target.closest(".spell-suggestion");
+  if (!btn) return;
+  const offset = parseInt(btn.dataset.offset, 10);
+  const length = parseInt(btn.dataset.length, 10);
+  const value  = btn.dataset.value;
+  const text   = sourceText.value;
+  sourceText.value = text.slice(0, offset) + value + text.slice(offset + length);
+  updateCharCount();
+  hideSpellTooltip();
+  clearSpellOverlay();
+  spellErrors = [];
+  clearTimeout(spellDebounceTimer);
+  spellDebounceTimer = setTimeout(() => checkSpelling(sourceText.value), 300);
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(translate, DEBOUNCE_MS);
+});
+
+// Close interactive tooltip on outside click
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".spell-tooltip") && !e.target.closest("mark")) {
+    if (spellTooltip.classList.contains("interactive")) hideSpellTooltip();
+  }
 });
 
 /* ----------------------------------------------------------
@@ -1159,6 +1286,86 @@ function loadTextIntoSource(content) {
   sourceText.classList.add("file-loaded");
   setTimeout(() => sourceText.classList.remove("file-loaded"), 600);
 }
+
+/* ----------------------------------------------------------
+   20b. WEB SHARE API
+---------------------------------------------------------- */
+shareBtn.addEventListener("click", async () => {
+  const text  = targetText.textContent.trim();
+  const prefs = loadPrefs();
+  const t     = I18N[prefs.lang || "fr"] || I18N.fr;
+  if (!text || text === t.targetPlaceholder) return;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ text });
+    } catch { /* user cancelled */ }
+  } else {
+    // Fallback: copy + show tooltip
+    try { await navigator.clipboard.writeText(text); } catch { /* ignore */ }
+    copyTooltip.classList.add("visible");
+    setTimeout(() => copyTooltip.classList.remove("visible"), 1800);
+  }
+});
+
+/* ----------------------------------------------------------
+   20c. EXPORT HISTORY
+---------------------------------------------------------- */
+exportHistoryBtn.addEventListener("click", () => {
+  const history = loadHistory();
+  if (history.length === 0) return;
+  const json    = JSON.stringify(history, null, 2);
+  const blob    = new Blob([json], { type: "application/json" });
+  const url     = URL.createObjectURL(blob);
+  const a       = document.createElement("a");
+  a.href        = url;
+  a.download    = `opentrad-history-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+/* ----------------------------------------------------------
+   20d. FOCUS MODE
+---------------------------------------------------------- */
+function toggleFocusMode() {
+  const active = document.body.classList.toggle("focus-mode");
+  focusBtn.classList.toggle("active", active);
+  focusBtn.setAttribute("aria-pressed", String(active));
+}
+focusBtn.addEventListener("click", toggleFocusMode);
+focusCloseBtn.addEventListener("click", toggleFocusMode);
+
+/* ----------------------------------------------------------
+   20e. HERO DISMISS
+---------------------------------------------------------- */
+const heroSection = document.getElementById("heroSection");
+if (heroSection) {
+  heroSection.addEventListener("click", () => {
+    heroSection.classList.add("dismissed");
+    heroSection.setAttribute("aria-hidden", "true");
+  });
+}
+
+/* ----------------------------------------------------------
+   20f. FONT SIZE TOGGLE
+---------------------------------------------------------- */
+const FONT_SIZES = ["normal", "large", "xlarge"];
+let fontSizeIndex = 0;
+
+fontSizeBtn.addEventListener("click", () => {
+  const panels = document.querySelectorAll(".translator-wrap");
+  fontSizeIndex = (fontSizeIndex + 1) % FONT_SIZES.length;
+  const size = FONT_SIZES[fontSizeIndex];
+  document.documentElement.setAttribute("data-font-size", size);
+  fontSizeBtn.setAttribute("data-size", size);
+  fontSizeBtn.title = size === "normal"
+    ? "Agrandir le texte"
+    : size === "large"
+      ? "Très grand"
+      : "Taille normale";
+});
 
 /* ----------------------------------------------------------
    21. PWA — Service Worker + Install Prompt
