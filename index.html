@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenTrad — Traducteur Intelligent</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="description" content="OpenTrad — Traducteur multilingue avec correction orthographique, historique et mode hors-ligne." />
+  <meta name="theme-color" content="#0f0f1a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="OpenTrad" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Google Fonts: Poppins + Inter (glass/aurora/neuro/bento/paper themes) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- pdf.js CDN — for PDF text extraction (OCR feature) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- Tesseract.js CDN — for image OCR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Aurora animated orbs (visible in aurora theme only) -->
+  <div class="aurora-bg" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════ -->
+  <header class="site-header">
+    <div class="logo">
+      <span class="logo-icon">◈</span>
+      <span class="logo-text">Open<em>Trad</em></span>
+    </div>
+    <div class="header-actions">
+      <!-- History -->
+      <button id="historyBtn" class="icon-btn" title="Historique des traductions" aria-label="Voir l'historique">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span class="btn-label" data-i18n="history">Historique</span>
+      </button>
+      <!-- Settings -->
+      <button id="settingsBtn" class="icon-btn" title="Paramètres" aria-label="Ouvrir les paramètres">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+      <!-- Theme Toggle (sun/moon) -->
+      <button id="themeToggle" class="icon-btn" title="Basculer clair/sombre" aria-label="Basculer le thème">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════
+       HERO
+  ══════════════════════════════════════════ -->
+  <section class="hero">
+    <h1 class="hero-title">
+      <span data-i18n="heroTitle">Traduisez</span>
+      <span class="accent" data-i18n="heroAccent"> instantanément</span>
+    </h1>
+    <p class="hero-sub" data-i18n="heroSub">Correction orthographique · Triple API · Hors-ligne · Glisser-déposer</p>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       DRAG & DROP OVERLAY
+  ══════════════════════════════════════════ -->
+  <div id="dropOverlay" class="drop-overlay" aria-hidden="true">
+    <div class="drop-inner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      <p>Déposez un fichier <strong>.txt / PDF / image</strong></p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       MAIN TRANSLATOR
+  ══════════════════════════════════════════ -->
+  <main class="translator-wrap" id="dropZone">
+    <!-- ── Source Panel ── -->
+    <section class="panel panel--source">
+      <div class="panel-header">
+        <select id="sourceLang" aria-label="Langue source">
+          <option value="auto">🔍 Détection auto</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="en">🇬🇧 Anglais</option>
+          <option value="es">🇪🇸 Espagnol</option>
+          <option value="de">🇩🇪 Allemand</option>
+          <option value="it">🇮🇹 Italien</option>
+          <option value="pt">🇵🇹 Portugais</option>
+          <option value="ru">🇷🇺 Russe</option>
+          <option value="zh">🇨🇳 Chinois</option>
+          <option value="ja">🇯🇵 Japonais</option>
+          <option value="ko">🇰🇷 Coréen</option>
+          <option value="ar">🇸🇦 Arabe</option>
+          <option value="hi">🇮🇳 Hindi</option>
+          <option value="nl">🇳🇱 Néerlandais</option>
+          <option value="pl">🇵🇱 Polonais</option>
+          <option value="sv">🇸🇪 Suédois</option>
+          <option value="tr">🇹🇷 Turc</option>
+          <option value="uk">🇺🇦 Ukrainien</option>
+          <option value="vi">🇻🇳 Vietnamien</option>
+          <option value="id">🇮🇩 Indonésien</option>
+        </select>
+        <div class="panel-actions">
+          <!-- Spell check -->
+          <button id="spellBtn" class="icon-btn icon-btn--small active" title="Correction orthographique (LanguageTool)" aria-label="Activer/désactiver la correction">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polyline points="4 7 4 4 20 4 20 7"/>
+              <line x1="9" y1="20" x2="15" y2="20"/>
+              <line x1="12" y1="4" x2="12" y2="20"/>
+            </svg>
+          </button>
+          <!-- Upload — now accepts .txt, PDF, and images -->
+          <button id="uploadBtn" class="icon-btn icon-btn--small" title="Charger un fichier (.txt, PDF, image)" aria-label="Charger un fichier">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </button>
+          <!-- OCR progress indicator (hidden by default) -->
+          <span id="ocrStatus" class="ocr-status" aria-live="polite"></span>
+          <input type="file" id="fileInput" accept=".txt,.pdf,image/jpeg,image/png,image/webp" hidden />
+          <!-- TTS Source -->
+          <button id="ttsSource" class="icon-btn icon-btn--small tts-btn" title="Lire à voix haute" aria-label="Lire le texte source">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+          </button>
+          <!-- Clear -->
+          <button id="clearBtn" class="icon-btn icon-btn--small" title="Effacer" aria-label="Effacer le texte">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="textarea-wrap">
+        <textarea id="sourceText" maxlength="5000"
+          placeholder="Saisissez ou glissez un fichier ici…"
+          aria-label="Texte à traduire" spellcheck="false"></textarea>
+        <div id="spellOverlay" class="spell-overlay" aria-hidden="true"></div>
+      </div>
+
+      <div class="panel-footer">
+        <span id="charCount" class="char-count">0 / 5000</span>
+        <span id="spellStatus" class="spell-status"></span>
+      </div>
+
+      <div id="spellTooltip" class="spell-tooltip" role="tooltip"></div>
+    </section>
+
+    <!-- ── Swap Button ── -->
+    <div class="swap-wrap">
+      <button id="swapBtn" class="swap-btn" title="Inverser les langues" aria-label="Inverser source et cible">
+        <!-- Desktop: left-right arrows -->
+        <svg class="swap-icon-h" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M8 3L4 7l4 4M4 7h16"/><path d="M16 21l4-4-4-4M20 17H4"/>
+        </svg>
+        <!-- Mobile: up-down arrows -->
+        <svg class="swap-icon-v" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ── Target Panel ── -->
+    <section class="panel panel--target">
+      <div class="panel-header">
+        <select id="targetLang" aria-label="Langue cible">
+          <option value="en">🇬🇧 Anglais</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="es">🇪🇸 Espagnol</option>
+          <option value="de">🇩🇪 Allemand</option>
+          <option value="it">🇮🇹 Italien</option>
+          <option value="pt">🇵🇹 Portugais</option>
+          <option value="ru">🇷🇺 Russe</option>
+          <option value="zh">🇨🇳 Chinois</option>
+          <option value="ja">🇯🇵 Japonais</option>
+          <option value="ko">🇰🇷 Coréen</option>
+          <option value="ar">🇸🇦 Arabe</option>
+          <option value="hi">🇮🇳 Hindi</option>
+          <option value="nl">🇳🇱 Néerlandais</option>
+          <option value="pl">🇵🇱 Polonais</option>
+          <option value="sv">🇸🇪 Suédois</option>
+          <option value="tr">🇹🇷 Turc</option>
+          <option value="uk">🇺🇦 Ukrainien</option>
+          <option value="vi">🇻🇳 Vietnamien</option>
+          <option value="id">🇮🇩 Indonésien</option>
+        </select>
+        <div class="panel-actions">
+          <!-- Keep Formatting toggle -->
+          <button id="formatToggle" class="icon-btn icon-btn--small" title="Conserver la mise en forme" aria-label="Conserver la mise en forme" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="21" y1="6" x2="3" y2="6"/><line x1="15" y1="12" x2="3" y2="12"/><line x1="17" y1="18" x2="3" y2="18"/>
+            </svg>
+          </button>
+          <!-- TTS Target -->
+          <button id="ttsTarget" class="icon-btn icon-btn--small tts-btn" title="Lire la traduction" aria-label="Lire la traduction">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+          </button>
+          <!-- Copy -->
+          <button id="copyBtn" class="icon-btn icon-btn--small" title="Copier la traduction" aria-label="Copier la traduction">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span id="copyTooltip" class="copy-tooltip">Copié !</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="loadingOverlay" class="loading-overlay" aria-hidden="true" aria-live="polite">
+        <div class="spinner"></div>
+        <span data-i18n="translating">Traduction…</span>
+      </div>
+
+      <div id="targetText" class="target-output" role="status" aria-live="polite" aria-label="Texte traduit">
+        <span class="placeholder-hint" data-i18n="targetPlaceholder">La traduction apparaîtra ici…</span>
+      </div>
+
+      <div class="panel-footer panel-footer--right">
+        <div id="apiBadgeWrap">
+          <span id="apiBadge" class="api-badge"></span>
+        </div>
+        <span id="errorMsg" class="error-msg" role="alert" aria-live="assertive"></span>
+      </div>
+    </section>
+  </main>
+
+  <!-- ══════════════════════════════════════════
+       HISTORY PANEL (slide-in from right)
+  ══════════════════════════════════════════ -->
+  <aside id="historyPanel" class="history-panel" aria-hidden="true" role="dialog" aria-label="Historique des traductions">
+    <div class="history-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span data-i18n="historyTitle">10 dernières traductions</span>
+      </h2>
+      <div class="history-header-actions">
+        <button id="clearHistoryBtn" class="btn-text" aria-label="Effacer l'historique" data-i18n="clearHistory">Tout effacer</button>
+        <button id="closeHistoryBtn" class="icon-btn" aria-label="Fermer l'historique">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <ul id="historyList" class="history-list" aria-label="Liste des traductions récentes"></ul>
+    <p id="historyEmpty" class="history-empty" data-i18n="historyEmpty">Aucune traduction enregistrée.</p>
+  </aside>
+  <div id="historyBackdrop" class="history-backdrop" aria-hidden="true"></div>
+
+  <!-- ══════════════════════════════════════════
+       SETTINGS MODAL
+  ══════════════════════════════════════════ -->
+  <div id="settingsModal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="settingsTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="settingsTitle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span data-i18n="settingsHeading">Paramètres</span>
+        </h2>
+        <button id="closeSettingsBtn" class="icon-btn" aria-label="Fermer les paramètres">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Interface Language -->
+        <div class="setting-group">
+          <label class="setting-label" data-i18n="settingsLang">Langue de l'interface</label>
+          <div class="setting-options" id="langOptions">
+            <button class="opt-btn active" data-lang="fr">Français</button>
+            <button class="opt-btn" data-lang="en">English</button>
+            <button class="opt-btn" data-lang="eu">Euskara</button>
+          </div>
+        </div>
+
+        <!-- UI Theme Style -->
+        <div class="setting-group">
+          <label class="setting-label" data-i18n="settingsTheme">Style de l'interface</label>
+          <div class="setting-options theme-grid" id="themeOptions">
+            <button class="opt-btn theme-opt active" data-theme-val="light">
+              <span class="theme-preview preview-glass-light"></span>
+              <span>Glassmorphism</span>
+            </button>
+            <button class="opt-btn theme-opt" data-theme-val="neuro">
+              <span class="theme-preview preview-neuro"></span>
+              <span>Neumorphism</span>
+            </button>
+            <button class="opt-btn theme-opt" data-theme-val="aurora">
+              <span class="theme-preview preview-aurora"></span>
+              <span>Midnight Aurora</span>
+            </button>
+            <button class="opt-btn theme-opt" data-theme-val="bento">
+              <span class="theme-preview preview-bento"></span>
+              <span>Bento Grid</span>
+            </button>
+            <button class="opt-btn theme-opt" data-theme-val="paper">
+              <span class="theme-preview preview-paper"></span>
+              <span>Paper White</span>
+            </button>
+            <button class="opt-btn theme-opt" data-theme-val="classic">
+              <span class="theme-preview preview-classic"></span>
+              <span>Classic</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dark / Light / Auto mode — now applies to ALL themes -->
+        <div class="setting-group" id="darkModeGroup">
+          <label class="setting-label" data-i18n="settingsDark">Mode sombre</label>
+          <div class="setting-options" id="darkModeOptions">
+            <button class="opt-btn active" data-darkmode="light" data-i18n="modeLight">Clair</button>
+            <button class="opt-btn" data-darkmode="dark" data-i18n="modeDark">Sombre</button>
+            <button class="opt-btn" data-darkmode="auto" data-i18n="modeAuto">Auto (système)</button>
+          </div>
+        </div>
+
+        <!-- Accent Color -->
+        <div class="setting-group">
+          <label class="setting-label" data-i18n="settingsAccent">Couleur d'accentuation</label>
+          <div class="setting-options" id="accentOptions">
+            <button class="opt-btn accent-opt active" data-accent="" title="Par défaut">
+              <span class="accent-dot accent-dot--default"></span> Thème
+            </button>
+            <button class="opt-btn accent-opt" data-accent="blue" title="Bleu">
+              <span class="accent-dot accent-dot--blue"></span> Bleu
+            </button>
+            <button class="opt-btn accent-opt" data-accent="purple" title="Violet">
+              <span class="accent-dot accent-dot--purple"></span> Violet
+            </button>
+            <button class="opt-btn accent-opt" data-accent="green" title="Vert">
+              <span class="accent-dot accent-dot--green"></span> Vert
+            </button>
+            <button class="opt-btn accent-opt" data-accent="red" title="Rouge">
+              <span class="accent-dot accent-dot--red"></span> Rouge
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="settingsBackdrop" class="history-backdrop settings-backdrop" aria-hidden="true"></div>
+
+  <!-- ══════════════════════════════════════════
+       PWA INSTALL BANNER
+  ══════════════════════════════════════════ -->
+  <div id="installBanner" class="install-banner" aria-hidden="true">
+    <span data-i18n="installMsg">📲 Installer OpenTrad comme application</span>
+    <button id="installBtn" class="btn-install" data-i18n="install">Installer</button>
+    <button id="dismissInstall" class="icon-btn icon-btn--small" aria-label="Fermer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       CONNECTION TOAST (replaces persistent pill + offline toast)
+       States: --connected (green, auto-hides) | --offline (orange, persistent)
+  ══════════════════════════════════════════ -->
+  <div id="connToast" class="conn-toast" aria-live="assertive" aria-hidden="true">
+    <span class="conn-toast-dot"></span>
+    <span id="connToastMsg">Connecté</span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
