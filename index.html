@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpenTrad — Traducteur Intelligent</title>
+  <title>OpenTrad — Traducteur gratuit</title>
 
   <!-- PWA Meta Tags -->
-  <meta name="description" content="OpenTrad — Traducteur multilingue avec correction orthographique, historique et mode hors-ligne." />
+  <meta name="description" content="OpenTrad — Traducteur gratuit, multilingue, avec correction orthographique et mode hors-ligne." />
   <meta name="theme-color" content="#0f0f1a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -19,14 +19,14 @@
   <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json" />
 
-  <!-- Google Fonts: Poppins + Inter (glass/aurora/neuro/bento/paper themes) -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-  <!-- pdf.js CDN — for PDF text extraction (OCR feature) -->
+  <!-- pdf.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <!-- Tesseract.js CDN — for image OCR -->
+  <!-- Tesseract.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
 
   <link rel="stylesheet" href="style.css" />
@@ -49,9 +49,11 @@
       <span class="logo-icon">◈</span>
       <div class="logo-group">
         <span class="logo-text">Open<em>Trad</em></span>
-        <span class="logo-tagline" data-i18n="heroSub">Correction orthographique · Triple API · Hors-ligne · Glisser-déposer</span>
+        <span class="logo-tagline" data-i18n="heroSub">Traducteur gratuit · Hors-ligne</span>
       </div>
     </div>
+    <!-- Dynamic connection/API info bar (Material You style) -->
+    <div id="headerInfoBar" class="header-info-bar" aria-live="polite"></div>
     <div class="header-actions">
       <!-- Focus mode -->
       <button id="focusBtn" class="icon-btn" title="Mode concentration" aria-label="Mode concentration" aria-pressed="false">
@@ -97,7 +99,7 @@
       <span data-i18n="heroTitle">Traduisez</span>
       <span class="accent" data-i18n="heroAccent"> instantanément</span>
     </h1>
-    <span class="hero-dismiss-hint" aria-hidden="true">✕</span>
+    <span class="hero-dismiss-hint" aria-hidden="true">Appuyez pour masquer ✕</span>
   </section>
 
   <!-- ══════════════════════════════════════════
@@ -117,15 +119,16 @@
        MAIN TRANSLATOR
   ══════════════════════════════════════════ -->
   <main class="translator-wrap" id="dropZone">
-    <!-- Focus mode exit button (visible only in focus-mode) -->
+    <!-- Focus mode exit button -->
     <button id="focusCloseBtn" class="focus-close-btn" title="Quitter le mode concentration" aria-label="Quitter le mode concentration">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
     </button>
+
     <!-- ── Source Panel ── -->
     <section class="panel panel--source">
-      <div class="panel-header">
+      <div class="panel-header" id="sourcePanelHeader">
         <select id="sourceLang" aria-label="Langue source">
           <option value="auto">🔍 Détection auto</option>
           <option value="fr">🇫🇷 Français</option>
@@ -149,6 +152,13 @@
           <option value="id">🇮🇩 Indonésien</option>
         </select>
         <div class="panel-actions">
+          <!-- Panel resize -->
+          <button id="panelSizeBtn" class="icon-btn icon-btn--small" title="Agrandir les cases" aria-label="Agrandir les cases" data-size="normal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+              <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+          </button>
           <!-- Font size toggle -->
           <button id="fontSizeBtn" class="icon-btn icon-btn--small" title="Agrandir le texte" aria-label="Changer la taille du texte" data-size="normal">
             <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
@@ -156,22 +166,34 @@
               <path d="M14 20h8v-1.5l-2-5h-4l-2 5V20zm3-4.5.8 2.5h-1.6l.8-2.5z"/>
             </svg>
           </button>
+          <!-- Text formatting: Bold -->
+          <button id="boldBtn" class="icon-btn icon-btn--small fmt-btn" title="Gras (Ctrl+B)" aria-label="Mettre en gras" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+            </svg>
+          </button>
+          <!-- Text formatting: Underline -->
+          <button id="underlineBtn" class="icon-btn icon-btn--small fmt-btn" title="Souligner (Ctrl+U)" aria-label="Souligner" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/>
+            </svg>
+          </button>
           <!-- Spell check -->
-          <button id="spellBtn" class="icon-btn icon-btn--small active" title="Correction orthographique (LanguageTool)" aria-label="Activer/désactiver la correction">
+          <button id="spellBtn" class="icon-btn icon-btn--small active" title="Correction orthographique" aria-label="Activer/désactiver la correction">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <polyline points="4 7 4 4 20 4 20 7"/>
               <line x1="9" y1="20" x2="15" y2="20"/>
               <line x1="12" y1="4" x2="12" y2="20"/>
             </svg>
           </button>
-          <!-- Upload — now accepts .txt, PDF, and images -->
+          <!-- Upload -->
           <button id="uploadBtn" class="icon-btn icon-btn--small" title="Charger un fichier (.txt, PDF, image)" aria-label="Charger un fichier">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
           </button>
-          <!-- OCR progress indicator (hidden by default) -->
+          <!-- OCR progress indicator -->
           <span id="ocrStatus" class="ocr-status" aria-live="polite"></span>
           <input type="file" id="fileInput" accept=".txt,.pdf,image/jpeg,image/png,image/webp" hidden />
           <!-- TTS Source -->
@@ -200,21 +222,27 @@
 
       <div class="panel-footer">
         <span id="charCount" class="char-count">0 / 5000</span>
-        <button id="spellStatus" class="spell-status" type="button" aria-expanded="false" aria-controls="spellPanel"></button>
+        <!-- Spell status: now shows inline with "Corriger tout" button -->
+        <div class="spell-footer-group">
+          <button id="spellStatus" class="spell-status" type="button" aria-expanded="false" aria-controls="spellPanel"></button>
+          <button id="fixAllBtn" class="fix-all-btn" style="display:none" title="Corriger toutes les erreurs automatiquement">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+            Corriger tout
+          </button>
+        </div>
       </div>
-      <div id="spellPanel" class="spell-panel" aria-hidden="true"></div>
-
+      <!-- Spell panel (expandable error list) -->
+      <div id="spellPanel" class="spell-panel" aria-hidden="true" role="region" aria-label="Liste des erreurs orthographiques"></div>
+      <!-- Spell tooltip (bubble on hovered word) -->
       <div id="spellTooltip" class="spell-tooltip" role="tooltip"></div>
     </section>
 
     <!-- ── Swap Button ── -->
     <div class="swap-wrap">
       <button id="swapBtn" class="swap-btn" title="Inverser les langues" aria-label="Inverser source et cible">
-        <!-- Desktop: left-right arrows -->
         <svg class="swap-icon-h" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
           <path d="M8 3L4 7l4 4M4 7h16"/><path d="M16 21l4-4-4-4M20 17H4"/>
         </svg>
-        <!-- Mobile: up-down arrows -->
         <svg class="swap-icon-v" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
           <path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
         </svg>
@@ -223,7 +251,7 @@
 
     <!-- ── Target Panel ── -->
     <section class="panel panel--target">
-      <div class="panel-header">
+      <div class="panel-header" id="targetPanelHeader">
         <select id="targetLang" aria-label="Langue cible">
           <option value="en">🇬🇧 Anglais</option>
           <option value="fr">🇫🇷 Français</option>
@@ -292,7 +320,6 @@
           <span id="apiBadge" class="api-badge"></span>
         </div>
         <span id="errorMsg" class="error-msg" role="alert" aria-live="assertive"></span>
-        <!-- Add to Favorites -->
         <button id="favBtn" class="icon-btn icon-btn--small fav-btn" title="Ajouter aux favoris" aria-label="Ajouter aux favoris" aria-pressed="false" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
@@ -303,7 +330,7 @@
   </main>
 
   <!-- ══════════════════════════════════════════
-       HISTORY PANEL (slide-in from right)
+       HISTORY PANEL
   ══════════════════════════════════════════ -->
   <aside id="historyPanel" class="history-panel" aria-hidden="true" role="dialog" aria-label="Historique des traductions">
     <div class="history-tabs" role="tablist" aria-label="Onglets historique">
@@ -391,10 +418,14 @@
               <span class="theme-preview preview-classic"></span>
               <span>Classic</span>
             </button>
+            <button class="opt-btn theme-opt" data-theme-val="material">
+              <span class="theme-preview preview-material"></span>
+              <span>Material You</span>
+            </button>
           </div>
         </div>
 
-        <!-- Dark / Light / Auto mode — now applies to ALL themes -->
+        <!-- Dark / Light / Auto mode -->
         <div class="setting-group" id="darkModeGroup">
           <label class="setting-label" data-i18n="settingsDark">Mode sombre</label>
           <div class="setting-options" id="darkModeOptions">
@@ -425,6 +456,26 @@
             </button>
           </div>
         </div>
+
+        <!-- Translation API -->
+        <div class="setting-group">
+          <label class="setting-label" data-i18n="settingsApi">API de traduction</label>
+          <div class="setting-options" id="apiOptions">
+            <button class="opt-btn active" data-api="auto" title="Essaie automatiquement Google, MyMemory, LibreTranslate">
+              ✦ Auto (recommandé)
+            </button>
+            <button class="opt-btn" data-api="google" title="Google Translate (non-officiel)">
+              Google
+            </button>
+            <button class="opt-btn" data-api="mymemory" title="MyMemory (gratuit, limité)">
+              MyMemory
+            </button>
+            <button class="opt-btn" data-api="libre" title="LibreTranslate (open-source)">
+              LibreTranslate
+            </button>
+          </div>
+          <p class="setting-hint" data-i18n="settingsApiHint">En mode Auto, l'application essaie chaque service l'un après l'autre si le précédent échoue.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -443,10 +494,7 @@
     </button>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       CONNECTION TOAST (replaces persistent pill + offline toast)
-       States: --connected (green, auto-hides) | --offline (orange, persistent)
-  ══════════════════════════════════════════ -->
+  <!-- Connection Toast -->
   <div id="connToast" class="conn-toast" aria-live="assertive" aria-hidden="true">
     <span class="conn-toast-dot"></span>
     <span id="connToastMsg">Connecté</span>

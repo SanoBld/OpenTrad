@@ -83,6 +83,13 @@ const themeOptions     = document.getElementById("themeOptions");
 const darkModeOptions  = document.getElementById("darkModeOptions");
 const darkModeGroup    = document.getElementById("darkModeGroup");
 const accentOptions    = document.getElementById("accentOptions");
+const apiOptions       = document.getElementById("apiOptions");
+
+// Text formatting / panel controls (wired below)
+const boldBtn          = document.getElementById("boldBtn");
+const underlineBtn     = document.getElementById("underlineBtn");
+const panelSizeBtn     = document.getElementById("panelSizeBtn");
+const fixAllBtn        = document.getElementById("fixAllBtn");
 
 /* ----------------------------------------------------------
    2. STATE
@@ -139,6 +146,8 @@ const I18N = {
     ocrLoading:       "Extraction…",
     ocrDone:          "Extrait !",
     allApiFailed:     "Tous les services de traduction sont indisponibles. Réessayez plus tard.",
+    settingsApi:      "API de traduction",
+    settingsApiHint:  "En mode Auto, l'application essaie chaque service l'un après l'autre si le précédent échoue.",
     justNow:          "À l'instant",
     minutesAgo:       (m) => `Il y a ${m} min`,
     hoursAgo:         (h) => `Il y a ${h} h`,
@@ -175,6 +184,8 @@ const I18N = {
     ocrLoading:       "Extracting…",
     ocrDone:          "Extracted!",
     allApiFailed:     "All translation services are unavailable. Try again later.",
+    settingsApi:      "Translation API",
+    settingsApiHint:  "In Auto mode, the app tries each service one after another if the previous one fails.",
     justNow:          "Just now",
     minutesAgo:       (m) => `${m}min ago`,
     hoursAgo:         (h) => `${h}h ago`,
@@ -211,6 +222,8 @@ const I18N = {
     ocrLoading:       "Ateratzen…",
     ocrDone:          "Ateratzeko!",
     allApiFailed:     "Itzulpen zerbitzu guztiak ez daude erabilgarri. Saiatu berriro geroago.",
+    settingsApi:      "Itzulpen API",
+    settingsApiHint:  "Auto moduan, aplikazioak zerbitzu bakoitza saiatzen du aurreko batek huts egiten badu.",
     justNow:          "Oraintxe",
     minutesAgo:       (m) => `Duela ${m} min`,
     hoursAgo:         (h) => `Duela ${h} ordu`,
@@ -362,6 +375,12 @@ function syncSettingsUI() {
   accentOptions.querySelectorAll(".opt-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.accent === accent);
   });
+
+  // API buttons
+  const api = prefs.api || "auto";
+  apiOptions.querySelectorAll(".opt-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.api === api);
+  });
 }
 
 /** Language picker */
@@ -402,6 +421,14 @@ accentOptions.addEventListener("click", (e) => {
   const accent = btn.dataset.accent;
   savePrefs({ accent });
   applyAccent(accent);
+  syncSettingsUI();
+});
+
+/** Translation API picker */
+apiOptions.addEventListener("click", (e) => {
+  const btn = e.target.closest(".opt-btn[data-api]");
+  if (!btn) return;
+  savePrefs({ api: btn.dataset.api });
   syncSettingsUI();
 });
 
@@ -497,6 +524,20 @@ function showBadge(api) {
   apiBadge.className = "api-badge";
   apiBadge.textContent = labels[api] || api;
   apiBadge.classList.add(classes[api] || "", "visible");
+
+  // Header info bar chip
+  const headerInfoBar = document.getElementById("headerInfoBar");
+  if (headerInfoBar) {
+    headerInfoBar.innerHTML =
+      `<span class="info-chip info-chip--api visible"><span class="info-chip-dot"></span>${labels[api] || api}</span>`;
+    const chip = headerInfoBar.querySelector(".info-chip");
+    if (chip) {
+      clearTimeout(headerInfoBar._hideTimer);
+      headerInfoBar._hideTimer = setTimeout(() => {
+        chip.classList.remove("visible");
+      }, 4000);
+    }
+  }
 }
 function hideBadge() { apiBadge.classList.remove("visible"); }
 
@@ -566,16 +607,19 @@ async function translate() {
   try {
     let result = null;
     let apiUsed = null;
+    const selectedApi = prefs.api || "auto";
 
-    try   { result = await translateGoogle(text, from, to);    apiUsed = "google"; }
-    catch { /* fallthrough */ }
+    if (selectedApi === "auto" || selectedApi === "google") {
+      try   { result = await translateGoogle(text, from, to);    apiUsed = "google"; }
+      catch { /* fallthrough */ }
+    }
 
-    if (!result) {
+    if (!result && (selectedApi === "auto" || selectedApi === "mymemory")) {
       try   { result = await translateMyMemory(text, from, to); apiUsed = "mymemory"; }
       catch { /* fallthrough */ }
     }
 
-    if (!result) {
+    if (!result && (selectedApi === "auto" || selectedApi === "libre")) {
       try   { result = await translateLibre(text, from, to);   apiUsed = "libre"; }
       catch { /* fallthrough */ }
     }
@@ -709,6 +753,23 @@ formatToggle.addEventListener("click", () => {
   formatToggle.classList.toggle("active", keepFormat);
   formatToggle.setAttribute("aria-pressed", String(keepFormat));
   targetText.classList.toggle("keep-format", keepFormat);
+});
+
+/* ----------------------------------------------------------
+   15b. TEXT FORMATTING — Bold / Underline on target output
+---------------------------------------------------------- */
+boldBtn.addEventListener("click", () => {
+  const active = boldBtn.getAttribute("aria-pressed") === "true";
+  boldBtn.setAttribute("aria-pressed", String(!active));
+  boldBtn.classList.toggle("active", !active);
+  targetText.classList.toggle("fmt-bold", !active);
+});
+
+underlineBtn.addEventListener("click", () => {
+  const active = underlineBtn.getAttribute("aria-pressed") === "true";
+  underlineBtn.setAttribute("aria-pressed", String(!active));
+  underlineBtn.classList.toggle("active", !active);
+  targetText.classList.toggle("fmt-underline", !active);
 });
 
 /* ----------------------------------------------------------
@@ -985,8 +1046,31 @@ spellBtn.addEventListener("click", () => {
   } else {
     clearSpellOverlay();
     spellStatus.textContent = "Correction désactivée";
+    fixAllBtn.style.display = "none";
     setTimeout(() => { spellStatus.textContent = ""; }, 2000);
   }
+});
+
+/** Corriger tout — applique la première suggestion de chaque erreur en ordre inverse */
+fixAllBtn.addEventListener("click", () => {
+  if (!spellErrors.length) return;
+  const sorted = [...spellErrors]
+    .filter(e => e.suggestions.length > 0)
+    .sort((a, b) => b.offset - a.offset);
+  let text = sourceText.value;
+  for (const err of sorted) {
+    text = text.slice(0, err.offset) + err.suggestions[0] + text.slice(err.offset + err.length);
+  }
+  sourceText.value = text;
+  updateCharCount();
+  clearSpellOverlay();
+  spellStatus.textContent = "";
+  spellStatus.classList.remove("has-errors");
+  fixAllBtn.style.display = "none";
+  clearTimeout(spellDebounceTimer);
+  spellDebounceTimer = setTimeout(() => checkSpelling(sourceText.value), 300);
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(translate, DEBOUNCE_MS);
 });
 
 async function checkSpelling(text) {
@@ -1027,6 +1111,7 @@ async function checkSpelling(text) {
       spellPanel.innerHTML = "";
       spellPanel.setAttribute("aria-hidden", "true");
       spellStatus.setAttribute("aria-expanded", "false");
+      fixAllBtn.style.display = "none";
       setTimeout(() => { spellStatus.textContent = ""; }, 3000);
     } else {
       const parts = [];
@@ -1035,6 +1120,9 @@ async function checkSpelling(text) {
       spellStatus.textContent = "⚠ " + parts.join(", ");
       spellStatus.classList.add("has-errors");
       renderSpellPanel(text, spellErrors);
+      // Show "Corriger tout" only if at least one error has a suggestion
+      const hasFixable = spellErrors.some(e => e.suggestions.length > 0);
+      fixAllBtn.style.display = hasFixable ? "inline-flex" : "none";
     }
   } catch (err) {
     spellStatus.textContent = "";
@@ -1449,6 +1537,24 @@ fontSizeBtn.addEventListener("click", () => {
   fontSizeBtn.setAttribute("data-size", size);
   fontSizeBtn.title = size === "normal"
     ? "Agrandir le texte"
+    : size === "large"
+      ? "Très grand"
+      : "Taille normale";
+});
+
+/* ----------------------------------------------------------
+   20g. PANEL SIZE TOGGLE
+---------------------------------------------------------- */
+const PANEL_SIZES = ["normal", "large", "xlarge"];
+let panelSizeIndex = 0;
+
+panelSizeBtn.addEventListener("click", () => {
+  panelSizeIndex = (panelSizeIndex + 1) % PANEL_SIZES.length;
+  const size = PANEL_SIZES[panelSizeIndex];
+  document.documentElement.setAttribute("data-panel-size", size);
+  panelSizeBtn.setAttribute("data-size", size);
+  panelSizeBtn.title = size === "normal"
+    ? "Agrandir les cases"
     : size === "large"
       ? "Très grand"
       : "Taille normale";
