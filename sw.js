@@ -1,13 +1,13 @@
 /* =============================================================
-   TRANSLUX — SERVICE WORKER (PWA)
+   OPENTRAD — SERVICE WORKER (PWA)
    Strategy:
      • App Shell (HTML, CSS, JS, fonts) → Cache First
      • Translation API calls → Network First (fall back to cache)
      • All other requests → Network Only
 ============================================================= */
 
-const CACHE_NAME    = "translux-v1";
-const OFFLINE_URL   = "/index.html";
+const CACHE_NAME  = "opentrad-v2";
+const OFFLINE_URL = "/index.html";
 
 // Files to pre-cache on install (app shell)
 const PRECACHE_URLS = [
@@ -16,7 +16,8 @@ const PRECACHE_URLS = [
   "/style.css",
   "/app.js",
   "/manifest.json",
-  // Google Fonts (will be cached on first use via runtime caching below)
+  // Google Fonts CSS (font binaries are cached at runtime via cacheFirst)
+  "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap",
 ];
 
 /* ----------------------------------------------------------
@@ -25,11 +26,22 @@ const PRECACHE_URLS = [
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log("[SW] Pre-caching app shell");
-      return cache.addAll(PRECACHE_URLS);
+      console.log("[OpenTrad SW] Pre-caching app shell");
+      // addAll fails if any URL errors — use individual puts for external URLs
+      const localUrls  = PRECACHE_URLS.filter(u => !u.startsWith("http"));
+      const remoteUrls = PRECACHE_URLS.filter(u => u.startsWith("http"));
+
+      return cache.addAll(localUrls).then(() =>
+        Promise.allSettled(
+          remoteUrls.map(url =>
+            fetch(url, { mode: "cors" })
+              .then(res => { if (res.ok) cache.put(url, res); })
+              .catch(() => { /* font CDN might fail offline — ok */ })
+          )
+        )
+      );
     })
   );
-  // Activate immediately (don't wait for old SW to die)
   self.skipWaiting();
 });
 
@@ -43,13 +55,12 @@ self.addEventListener("activate", (event) => {
         cacheNames
           .filter((name) => name !== CACHE_NAME)
           .map((name) => {
-            console.log("[SW] Deleting old cache:", name);
+            console.log("[OpenTrad SW] Deleting old cache:", name);
             return caches.delete(name);
           })
       )
     )
   );
-  // Take control of all clients immediately
   self.clients.claim();
 });
 
@@ -60,7 +71,6 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET and chrome-extension requests
   if (request.method !== "GET") return;
   if (url.protocol === "chrome-extension:") return;
 
@@ -77,7 +87,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // ── Google Fonts → Cache First (with network fallback) ────
+  // ── Google Fonts → Cache First (runtime caching) ──────────
   const isFont = (
     url.hostname.includes("fonts.googleapis.com") ||
     url.hostname.includes("fonts.gstatic.com")
@@ -93,20 +103,11 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(cacheFirst(request, OFFLINE_URL));
     return;
   }
-
-  // ── Everything else → Network Only ────────────────────────
-  // (don't intercept; let the browser handle it)
 });
 
 /* ----------------------------------------------------------
    STRATEGIES
 ---------------------------------------------------------- */
-
-/**
- * Cache First: return from cache if available,
- * else fetch from network, cache the response, then return it.
- * If both fail and a fallbackUrl is provided, return that.
- */
 async function cacheFirst(request, fallbackUrl) {
   const cached = await caches.match(request);
   if (cached) return cached;
@@ -123,7 +124,6 @@ async function cacheFirst(request, fallbackUrl) {
       const fallback = await caches.match(fallbackUrl);
       if (fallback) return fallback;
     }
-    // Return a minimal offline response
     return new Response(
       "Contenu hors-ligne non disponible.",
       { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } }
@@ -131,11 +131,6 @@ async function cacheFirst(request, fallbackUrl) {
   }
 }
 
-/**
- * Network First: try the network first.
- * On success, update the cache and return the response.
- * On failure, try to return the cached version.
- */
 async function networkFirst(request) {
   try {
     const networkResponse = await fetch(request);

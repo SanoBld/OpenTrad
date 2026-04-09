@@ -12,6 +12,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="OpenTrad" />
 
+  <!-- Favicon & App Icon -->
+  <link rel="icon" type="image/png" href="LogoC.png" />
+  <link rel="apple-touch-icon" href="LogoC.png" />
+
   <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json" />
 
@@ -288,6 +292,12 @@
           <span id="apiBadge" class="api-badge"></span>
         </div>
         <span id="errorMsg" class="error-msg" role="alert" aria-live="assertive"></span>
+        <!-- Add to Favorites -->
+        <button id="favBtn" class="icon-btn icon-btn--small fav-btn" title="Ajouter aux favoris" aria-label="Ajouter aux favoris" aria-pressed="false" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </button>
       </div>
     </section>
   </main>
@@ -296,12 +306,16 @@
        HISTORY PANEL (slide-in from right)
   ══════════════════════════════════════════ -->
   <aside id="historyPanel" class="history-panel" aria-hidden="true" role="dialog" aria-label="Historique des traductions">
+    <div class="history-tabs" role="tablist" aria-label="Onglets historique">
+      <button class="history-tab active" data-tab="history" role="tab" aria-selected="true" data-i18n="historyTabAll">Récent</button>
+      <button class="history-tab" data-tab="favorites" role="tab" aria-selected="false" data-i18n="historyTabFav">⭐ Favoris</button>
+    </div>
     <div class="history-header">
       <h2>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
         </svg>
-        <span data-i18n="historyTitle">10 dernières traductions</span>
+        <span id="historyTitle" data-i18n="historyTitle">10 dernières traductions</span>
       </h2>
       <div class="history-header-actions">
         <button id="exportHistoryBtn" class="btn-text" aria-label="Exporter l'historique" title="Exporter en JSON">⬇ Export</button>

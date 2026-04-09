@@ -1,7 +1,7 @@
 {
-  "name": "TransLux — Traducteur Intelligent",
-  "short_name": "TransLux",
-  "description": "Traducteur multilingue avec correction orthographique, historique et mode hors-ligne.",
+  "name": "OpenTrad — Traducteur Intelligent",
+  "short_name": "OpenTrad",
+  "description": "OpenTrad — Traducteur multilingue avec correction orthographique, historique et mode hors-ligne.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "any",
@@ -10,15 +10,15 @@
   "lang": "fr",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='24' fill='%230f0f14'/><text x='96' y='130' font-size='110' text-anchor='middle' fill='%23e63946'>⬡</text></svg>",
+      "src": "LogoC.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='64' fill='%230f0f14'/><text x='256' y='360' font-size='300' text-anchor='middle' fill='%23e63946'>⬡</text></svg>",
+      "src": "LogoC.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],

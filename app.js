@@ -43,6 +43,7 @@ const exportHistoryBtn = document.getElementById("exportHistoryBtn");
 const focusBtn         = document.getElementById("focusBtn");
 const focusCloseBtn    = document.getElementById("focusCloseBtn");
 const fontSizeBtn      = document.getElementById("fontSizeBtn");
+const favBtn           = document.getElementById("favBtn");
 
 // History
 const historyBtn      = document.getElementById("historyBtn");
@@ -108,6 +109,9 @@ const PREFS_KEY      = "opentrad-prefs";
 ---------------------------------------------------------- */
 const I18N = {
   fr: {
+    historyTabAll:    "Récent",
+    historyTabFav:    "⭐ Favoris",
+    favEmpty:         "Aucun favori enregistré.",
     heroTitle:        "Traduisez",
     heroAccent:       " instantanément",
     heroSub:          "Correction orthographique · Triple API · Hors-ligne · Glisser-déposer",
@@ -141,6 +145,9 @@ const I18N = {
     daysAgo:          (d) => `Il y a ${d} j`,
   },
   en: {
+    historyTabAll:    "Recent",
+    historyTabFav:    "⭐ Favorites",
+    favEmpty:         "No favorites yet.",
     heroTitle:        "Translate",
     heroAccent:       " instantly",
     heroSub:          "Spell check · Triple API · Offline · Drag & drop",
@@ -174,6 +181,9 @@ const I18N = {
     daysAgo:          (d) => `${d}d ago`,
   },
   eu: {
+    historyTabAll:    "Azkenak",
+    historyTabFav:    "⭐ Gogokoak",
+    favEmpty:         "Ez dago gogoko itzulpenik.",
     heroTitle:        "Itzuli",
     heroAccent:       " berehala",
     heroSub:          "Ortografia · Triple API · Lineaz kanpo · Arrastatu",
@@ -218,7 +228,9 @@ function applyI18n(lang) {
   sourceText.placeholder = t.sourcePlaceholder;
   const hint = targetText.querySelector(".placeholder-hint");
   if (hint) hint.textContent = t.targetPlaceholder;
-  document.documentElement.lang = lang === "eu" ? "eu" : lang;
+  // Properly map all supported UI languages to BCP-47 codes
+  const langMap = { fr: "fr", en: "en", eu: "eu" };
+  document.documentElement.lang = langMap[lang] || lang;
 }
 
 /* ----------------------------------------------------------
@@ -572,9 +584,11 @@ async function translate() {
       targetText.textContent = result;
       showBadge(apiUsed);
       saveToHistory(text, result, from, to);
+      updateFavBtn();
     } else {
       targetText.innerHTML = `<span class="placeholder-hint">${t.targetPlaceholder}</span>`;
       showError(t.allApiFailed);
+      resetFavBtn();
     }
   } finally {
     hideLoading();
@@ -648,12 +662,16 @@ clearBtn.addEventListener("click", () => {
   spellStatus.textContent = "";
   spellStatus.classList.remove("has-errors");
   spellStatus.setAttribute("aria-expanded", "false");
+  resetFavBtn();
   sourceText.focus();
 });
 
 /* ----------------------------------------------------------
    14. COPY TO CLIPBOARD
 ---------------------------------------------------------- */
+const COPY_ICON_SVG  = `<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>`;
+const CHECK_ICON_SVG = `<polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>`;
+
 copyBtn.addEventListener("click", async () => {
   const text = targetText.textContent.trim();
   const prefs = loadPrefs();
@@ -669,8 +687,17 @@ copyBtn.addEventListener("click", async () => {
     document.execCommand("copy"); document.body.removeChild(ta);
   }
 
+  // Visual feedback: swap to checkmark + green flash
+  const svg = copyBtn.querySelector("svg");
+  if (svg) svg.innerHTML = CHECK_ICON_SVG;
+  copyBtn.classList.add("copy-success");
   copyTooltip.classList.add("visible");
-  setTimeout(() => copyTooltip.classList.remove("visible"), 1800);
+
+  setTimeout(() => {
+    copyTooltip.classList.remove("visible");
+    copyBtn.classList.remove("copy-success");
+    if (svg) svg.innerHTML = COPY_ICON_SVG;
+  }, 1800);
 });
 
 /* ----------------------------------------------------------
@@ -740,8 +767,24 @@ document.addEventListener("keydown", (e) => {
 });
 
 /* ----------------------------------------------------------
-   18. HISTORY — localStorage (10 last translations)
+   18b. HISTORY TABS — Recent / Favorites
 ---------------------------------------------------------- */
+let activeHistoryTab = "history"; // "history" | "favorites"
+
+function initHistoryTabs() {
+  const tabs = document.querySelectorAll(".history-tab");
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      tabs.forEach(t => { t.classList.remove("active"); t.setAttribute("aria-selected", "false"); });
+      tab.classList.add("active");
+      tab.setAttribute("aria-selected", "true");
+      activeHistoryTab = tab.dataset.tab;
+      renderHistory();
+    });
+  });
+}
+
+
 function loadHistory() {
   try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
   catch { return []; }
@@ -778,6 +821,31 @@ function toggleStar(id) {
   if (item) { item.starred = !item.starred; saveHistory(history); renderHistory(); }
 }
 
+/* ── Fav button (target panel footer) ── */
+function updateFavBtn() {
+  const history = loadHistory();
+  if (!history.length) { resetFavBtn(); return; }
+  const last = history[0];
+  favBtn.disabled = false;
+  favBtn.classList.toggle("starred", !!last.starred);
+  favBtn.setAttribute("aria-pressed", String(!!last.starred));
+  favBtn.title = last.starred ? "Retirer des favoris" : "Ajouter aux favoris";
+}
+
+function resetFavBtn() {
+  favBtn.disabled = true;
+  favBtn.classList.remove("starred");
+  favBtn.setAttribute("aria-pressed", "false");
+  favBtn.title = "Ajouter aux favoris";
+}
+
+favBtn.addEventListener("click", () => {
+  const history = loadHistory();
+  if (!history.length) return;
+  toggleStar(history[0].id);
+  updateFavBtn();
+});
+
 function timeAgo(iso) {
   const prefs = loadPrefs();
   const t     = I18N[prefs.lang || "fr"] || I18N.fr;
@@ -801,15 +869,34 @@ function renderHistory() {
   const history = loadHistory();
   historyList.innerHTML = "";
 
-  if (history.length === 0) { historyEmpty.classList.add("visible"); return; }
+  const prefs = loadPrefs();
+  const t = I18N[prefs.lang || "fr"] || I18N.fr;
+
+  // Filter by active tab
+  let items = history;
+  if (activeHistoryTab === "favorites") {
+    items = history.filter(h => h.starred);
+    if (items.length === 0) {
+      historyEmpty.textContent = t.favEmpty || "Aucun favori enregistré.";
+      historyEmpty.classList.add("visible");
+      return;
+    }
+  } else {
+    if (history.length === 0) {
+      historyEmpty.textContent = t.historyEmpty;
+      historyEmpty.classList.add("visible");
+      return;
+    }
+    // Sort: starred first
+    items = [...history].sort((a, b) => {
+      if (a.starred === b.starred) return 0;
+      return a.starred ? -1 : 1;
+    });
+  }
+
   historyEmpty.classList.remove("visible");
 
-  const sorted = [...history].sort((a, b) => {
-    if (a.starred === b.starred) return 0;
-    return a.starred ? -1 : 1;
-  });
-
-  sorted.forEach((item, idx) => {
+  items.forEach((item, idx) => {
     const li = document.createElement("li");
     li.className = "history-item";
     li.style.animationDelay = `${idx * 40}ms`;
@@ -1414,10 +1501,11 @@ function init() {
   const prefs = loadPrefs();
   const lang  = prefs.lang || "fr";
 
-  initTheme();       // Apply theme + accent from prefs
-  applyI18n(lang);   // Apply i18n strings
-  updateCharCount(); // Reset char counter
-  syncSettingsUI();  // Sync settings buttons
+  initTheme();        // Apply theme + accent from prefs
+  applyI18n(lang);    // Apply i18n strings
+  updateCharCount();  // Reset char counter
+  syncSettingsUI();   // Sync settings buttons
+  initHistoryTabs();  // Wire history tab buttons
 
   if (sourceText.value) updateCharCount();
 
