@@ -805,7 +805,7 @@ body {
 }
 .hero:hover .hero-dismiss-hint { opacity: 1; transform: translateY(0); }
 
-/* Dismissed: only collapses the hero title, panels don't jump up */
+/* Hero — panels stay anchored in place when hero is dismissed */
 .hero {
   text-align: center;
   padding: 2.5rem 1rem 1.5rem;
@@ -813,19 +813,13 @@ body {
   z-index: 1;
   cursor: pointer;
   user-select: none;
-  overflow: hidden;
-  /* Height transition only — panels anchored below hero, layout doesn't jump */
-  max-height: 160px;
-  transition: max-height .4s cubic-bezier(.4,0,.2,1),
-              padding .4s cubic-bezier(.4,0,.2,1),
-              opacity .3s ease;
+  /* No height collapse — only fade so panels never move */
+  transition: opacity .4s ease, visibility .4s ease;
 }
 .hero.dismissed {
-  max-height: 0;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
   opacity: 0;
   pointer-events: none;
+  visibility: hidden;
 }
 
 .hero-title {
@@ -1289,27 +1283,30 @@ select option { background: var(--bg-panel); color: var(--text); }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
 
 /* ──────────────────────────────────────────
-   35. HISTORY PANEL
+   35. HISTORY PANEL — slides in at layout level, pushes content
 ────────────────────────────────────────── */
 .history-backdrop {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.5);
-  z-index: 300; opacity: 0; pointer-events: none;
-  transition: opacity .25s;
-  backdrop-filter: blur(3px);
+  display: none; /* No overlay — content pushes instead */
 }
-.history-backdrop.visible { opacity: 1; pointer-events: auto; }
+
+/* Body shifts left when history is open */
+body {
+  transition: padding-right .3s cubic-bezier(.4,0,.2,1);
+}
+body.history-open {
+  padding-right: min(400px, 95vw);
+}
 
 .history-panel {
   position: fixed; top: 0; right: 0; height: 100%;
   width: min(400px, 95vw);
   background: var(--bg-panel);
   border-left: 1.5px solid var(--border);
-  z-index: 400;
+  z-index: 201; /* just above sticky header (200) */
   transform: translateX(110%);
   transition: transform .3s cubic-bezier(.4,0,.2,1);
   display: flex; flex-direction: column; overflow: hidden;
-  box-shadow: -8px 0 40px rgba(0,0,0,.25);
+  box-shadow: -8px 0 40px rgba(0,0,0,.15);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
 }
@@ -1418,9 +1415,7 @@ select option { background: var(--bg-panel); color: var(--text); }
   padding: 1rem;
   opacity: 0; pointer-events: none;
   transition: opacity .25s;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  background: rgba(0,0,0,.45);
+  background: rgba(0,0,0,.65);
 }
 .modal-overlay.open { opacity: 1; pointer-events: auto; }
 
@@ -1714,4 +1709,343 @@ select option { background: var(--bg-panel); color: var(--text); }
 @keyframes matPanelIn {
   from { opacity: .7; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   NEW FEATURES — v3 additions
+   Dictionary Panel · Conversation Mode · Keyboard Shortcuts Help
+══════════════════════════════════════════════════════════════ */
+
+/* ─── Dictionary Panel ─── */
+.dict-panel {
+  margin: .5rem 0 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-panel-alt);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  transition: max-height .35s cubic-bezier(.4,0,.2,1), opacity .3s ease;
+  max-height: 0;
+  opacity: 0;
+}
+.dict-panel.open {
+  max-height: 480px;
+  opacity: 1;
+}
+.dict-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .55rem .9rem;
+  border-bottom: 1px solid var(--border);
+}
+.dict-panel-header strong {
+  font-size: .78rem;
+  font-family: var(--font-display);
+  color: var(--text);
+  display: flex; align-items: center; gap: .45rem;
+}
+.dict-word-badge {
+  background: var(--accent);
+  color: #fff;
+  font-size: .68rem;
+  padding: .1rem .45rem;
+  border-radius: 99px;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+.dict-close-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 1rem; line-height: 1;
+  padding: .15rem .3rem; border-radius: 4px;
+  transition: color var(--transition), background var(--transition);
+}
+.dict-close-btn:hover { color: var(--text); background: var(--bg-panel-alt); }
+
+.dict-body {
+  padding: .7rem .9rem;
+  overflow-y: auto;
+  max-height: 380px;
+  scrollbar-width: thin;
+}
+.dict-meaning {
+  margin-bottom: .9rem;
+}
+.dict-pos {
+  display: inline-block;
+  font-size: .65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--accent);
+  background: rgba(108,99,255,.12);
+  padding: .1rem .45rem;
+  border-radius: 99px;
+  margin-bottom: .45rem;
+}
+.dict-def {
+  font-size: .79rem;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: .3rem;
+}
+.dict-example {
+  font-size: .73rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding-left: .7rem;
+  border-left: 2px solid var(--accent-2);
+  margin-bottom: .3rem;
+}
+.dict-synonyms {
+  display: flex; flex-wrap: wrap; gap: .3rem;
+  margin-top: .35rem;
+}
+.dict-syn-label {
+  font-size: .68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: .2rem;
+}
+.dict-syn-tag {
+  font-size: .68rem;
+  padding: .1rem .4rem;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.dict-syn-tag:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.dict-loading, .dict-error, .dict-not-found {
+  font-size: .78rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 1rem 0;
+}
+.dict-error { color: var(--spell-error); }
+.dict-hint {
+  font-size: .67rem;
+  color: var(--text-dim);
+  text-align: center;
+  padding: .4rem 0 .1rem;
+  display: none;
+}
+.target-output:not(:empty) ~ .dict-hint-wrap .dict-hint { display: block; }
+
+/* Dbl-click highlight on target output */
+.target-output ::selection { background: rgba(108,99,255,.25); }
+
+/* ─── Conversation Mode ─── */
+.conv-overlay {
+  position: fixed; inset: 0;
+  z-index: 9000;
+  display: flex; flex-direction: column;
+  background: var(--bg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s ease;
+}
+.conv-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.conv-half {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  position: relative;
+}
+.conv-half--top {
+  background: var(--bg-panel-alt);
+  border-bottom: 2px solid var(--border);
+  transform: rotate(180deg);
+}
+.conv-text {
+  width: 100%;
+  max-width: 560px;
+  min-height: 80px;
+  font-size: clamp(1.1rem, 3.5vw, 1.7rem);
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.45;
+  word-break: break-word;
+}
+.conv-text-placeholder {
+  color: var(--text-dim);
+  font-size: .85rem;
+  font-weight: 400;
+}
+.conv-mic-btn {
+  width: 70px; height: 70px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s ease;
+  flex-shrink: 0;
+}
+.conv-mic-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.conv-mic-btn.listening {
+  background: var(--spell-error);
+  border-color: var(--spell-error);
+  color: #fff;
+  animation: mic-pulse 1.2s ease infinite;
+}
+.conv-mic-btn svg { width: 28px; height: 28px; }
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,.5); }
+  50% { box-shadow: 0 0 0 12px rgba(239,68,68,0); }
+}
+.conv-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .55rem 1.2rem;
+  background: var(--header-bg);
+  color: var(--header-text);
+  flex-shrink: 0;
+  gap: 1rem;
+}
+.conv-bar-langs {
+  font-size: .8rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: .05em;
+  opacity: .9;
+}
+.conv-bar-actions {
+  display: flex; gap: .6rem; align-items: center;
+}
+.conv-action-btn {
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.18);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: .35rem .75rem;
+  font-size: .74rem;
+  cursor: pointer;
+  transition: background .2s;
+}
+.conv-action-btn:hover { background: rgba(255,255,255,.22); }
+.conv-close-btn {
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.18);
+  color: #fff;
+  border-radius: 50%;
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background .2s;
+}
+.conv-close-btn:hover { background: rgba(239,68,68,.7); }
+.conv-close-btn svg { width: 16px; height: 16px; }
+/* Conv mode button in header */
+.conv-btn-header svg { width: 18px; height: 18px; }
+
+/* ─── Keyboard Shortcuts Help ─── */
+.kb-help-overlay {
+  position: fixed; inset: 0;
+  z-index: 8500;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.5);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+.kb-help-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.kb-help-box {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(20px);
+  padding: 1.4rem 1.6rem;
+  width: min(480px, 94vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-hard);
+}
+.kb-help-title {
+  font-family: var(--font-display);
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 1rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.kb-help-close {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 1.1rem;
+  transition: color var(--transition);
+}
+.kb-help-close:hover { color: var(--text); }
+.kb-group-title {
+  font-size: .67rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--text-muted);
+  margin: .8rem 0 .4rem;
+}
+.kb-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .32rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: .79rem;
+  color: var(--text);
+}
+.kb-row:last-child { border-bottom: none; }
+.kb-keys {
+  display: flex; gap: .25rem; align-items: center;
+}
+kbd {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 26px; height: 22px;
+  padding: 0 .45rem;
+  background: var(--bg-panel-alt);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: .68rem;
+  font-weight: 600;
+  color: var(--text);
+  box-shadow: 0 1px 0 var(--border);
+}
+.kb-desc { color: var(--text-muted); flex: 1; text-align: right; }
+
+/* ─── Shortcut toast (brief feedback) ─── */
+.shortcut-toast {
+  position: fixed;
+  bottom: 5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--header-bg);
+  color: var(--header-text);
+  font-size: .74rem;
+  padding: .4rem .9rem;
+  border-radius: 99px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+  z-index: 7000;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.1);
+}
+.shortcut-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }

@@ -524,20 +524,6 @@ function showBadge(api) {
   apiBadge.className = "api-badge";
   apiBadge.textContent = labels[api] || api;
   apiBadge.classList.add(classes[api] || "", "visible");
-
-  // Header info bar chip
-  const headerInfoBar = document.getElementById("headerInfoBar");
-  if (headerInfoBar) {
-    headerInfoBar.innerHTML =
-      `<span class="info-chip info-chip--api visible"><span class="info-chip-dot"></span>${labels[api] || api}</span>`;
-    const chip = headerInfoBar.querySelector(".info-chip");
-    if (chip) {
-      clearTimeout(headerInfoBar._hideTimer);
-      headerInfoBar._hideTimer = setTimeout(() => {
-        chip.classList.remove("visible");
-      }, 4000);
-    }
-  }
 }
 function hideBadge() { apiBadge.classList.remove("visible"); }
 
@@ -804,26 +790,147 @@ ttsSource.addEventListener("click", () => speak(sourceText.value, sourceLang.val
 ttsTarget.addEventListener("click", () => speak(targetText.textContent, targetLang.value, ttsTarget));
 
 /* ----------------------------------------------------------
-   17. KEYBOARD SHORTCUTS
+   17. KEYBOARD SHORTCUTS  (power-user shortcuts)
 ---------------------------------------------------------- */
+
+// ── New DOM refs ──
+const convModeBtn    = document.getElementById("convModeBtn");
+const convOverlay    = document.getElementById("convOverlay");
+const convMicTop     = document.getElementById("convMicTop");
+const convMicBottom  = document.getElementById("convMicBottom");
+const convTextTop    = document.getElementById("convTextTop");
+const convTextBottom = document.getElementById("convTextBottom");
+const convBarLangs   = document.getElementById("convBarLangs");
+const convSwapLangs  = document.getElementById("convSwapLangs");
+const convClearBtn2  = document.getElementById("convClearBtn");
+const convCloseBtn   = document.getElementById("convCloseBtn");
+const dictPanel      = document.getElementById("dictPanel");
+const dictBody       = document.getElementById("dictBody");
+const dictWordBadge  = document.getElementById("dictWordBadge");
+const dictCloseBtn   = document.getElementById("dictCloseBtn");
+const kbHelpOverlay  = document.getElementById("kbHelpOverlay");
+const kbHelpClose    = document.getElementById("kbHelpClose");
+const shortcutToast  = document.getElementById("shortcutToast");
+
+// ── Shortcut feedback toast ──
+let shortcutToastTimer = null;
+function showShortcutToast(msg) {
+  shortcutToast.textContent = msg;
+  shortcutToast.classList.add("show");
+  clearTimeout(shortcutToastTimer);
+  shortcutToastTimer = setTimeout(() => shortcutToast.classList.remove("show"), 1600);
+}
+
+// ── Ctrl+Enter on sourceText (existing, keep) ──
 sourceText.addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
     e.preventDefault();
     clearTimeout(debounceTimer);
     translate();
+    showShortcutToast("⟳ Traduction lancée");
   }
 });
 
+// ── Global shortcuts ──
 document.addEventListener("keydown", (e) => {
+  const tag = document.activeElement?.tagName;
+  const inInput = tag === "TEXTAREA" || tag === "INPUT";
+  const mod = e.ctrlKey || e.metaKey;
+
+  // Esc — close any open panel
   if (e.key === "Escape") {
-    if (historyPanel.classList.contains("open"))  closeHistory();
-    if (settingsModal.classList.contains("open")) closeSettings();
+    if (convOverlay.classList.contains("open"))   { closeConvMode(); return; }
+    if (kbHelpOverlay.classList.contains("open")) { closeKbHelp();   return; }
+    if (historyPanel.classList.contains("open"))  { closeHistory();  return; }
+    if (settingsModal.classList.contains("open")) { closeSettings(); return; }
     if (document.body.classList.contains("focus-mode")) toggleFocusMode();
+    return;
   }
-  // Ctrl+Shift+S → swap languages
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "s") {
+
+  // ? — shortcuts help (when not typing)
+  if (e.key === "?" && !mod && !inInput) {
+    e.preventDefault();
+    toggleKbHelp();
+    return;
+  }
+
+  if (!mod) return;
+
+  // Ctrl+Enter — translate
+  if (e.key === "Enter") {
+    e.preventDefault();
+    clearTimeout(debounceTimer);
+    translate();
+    showShortcutToast("⟳ Traduction lancée");
+    return;
+  }
+
+  // Ctrl+S — swap languages
+  if (e.key === "s" && !e.shiftKey) {
     e.preventDefault();
     swapBtn.click();
+    showShortcutToast("⇄ Langues inversées");
+    return;
+  }
+
+  // Ctrl+L — clear text
+  if (e.key === "l") {
+    e.preventDefault();
+    clearBtn.click();
+    showShortcutToast("✕ Texte effacé");
+    return;
+  }
+
+  // Ctrl+Shift+C — copy translation
+  if (e.key === "c" && e.shiftKey) {
+    e.preventDefault();
+    copyBtn.click();
+    return;
+  }
+
+  // Ctrl+H — history
+  if (e.key === "h") {
+    e.preventDefault();
+    if (historyPanel.classList.contains("open")) closeHistory();
+    else openHistory();
+    return;
+  }
+
+  // Ctrl+, — settings
+  if (e.key === ",") {
+    e.preventDefault();
+    if (settingsModal.classList.contains("open")) closeSettings();
+    else openSettings();
+    return;
+  }
+
+  // Ctrl+K — focus mode
+  if (e.key === "k") {
+    e.preventDefault();
+    focusBtn.click();
+    showShortcutToast("◈ Mode concentration");
+    return;
+  }
+
+  // Ctrl+Shift+V — conversation mode
+  if (e.key === "v" && e.shiftKey) {
+    e.preventDefault();
+    toggleConvMode();
+    return;
+  }
+
+  // Ctrl+B — bold output (when not typing in source)
+  if (e.key === "b" && !inInput) {
+    e.preventDefault();
+    boldBtn.click();
+    return;
+  }
+
+  // Ctrl+U — underline output (when not typing in source)
+  if (e.key === "u" && !inInput) {
+    e.preventDefault();
+    underlineBtn.click();
+    return;
   }
 });
 
@@ -1013,16 +1120,14 @@ function openHistory() {
   renderHistory();
   historyPanel.classList.add("open");
   historyPanel.setAttribute("aria-hidden", "false");
-  historyBackdrop.classList.add("visible");
+  document.body.classList.add("history-open");
   closeHistoryBtn.focus();
-  document.body.style.overflow = "hidden";
 }
 
 function closeHistory() {
   historyPanel.classList.remove("open");
   historyPanel.setAttribute("aria-hidden", "true");
-  historyBackdrop.classList.remove("visible");
-  document.body.style.overflow = "";
+  document.body.classList.remove("history-open");
   historyBtn.focus();
 }
 
@@ -1543,22 +1648,8 @@ fontSizeBtn.addEventListener("click", () => {
 });
 
 /* ----------------------------------------------------------
-   20g. PANEL SIZE TOGGLE
+   20g. PANEL SIZE TOGGLE — removed, button removed from UI
 ---------------------------------------------------------- */
-const PANEL_SIZES = ["normal", "large", "xlarge"];
-let panelSizeIndex = 0;
-
-panelSizeBtn.addEventListener("click", () => {
-  panelSizeIndex = (panelSizeIndex + 1) % PANEL_SIZES.length;
-  const size = PANEL_SIZES[panelSizeIndex];
-  document.documentElement.setAttribute("data-panel-size", size);
-  panelSizeBtn.setAttribute("data-size", size);
-  panelSizeBtn.title = size === "normal"
-    ? "Agrandir les cases"
-    : size === "large"
-      ? "Très grand"
-      : "Taille normale";
-});
 
 /* ----------------------------------------------------------
    21. PWA — Service Worker + Install Prompt
@@ -1620,3 +1711,327 @@ function init() {
 }
 
 init();
+
+/* ----------------------------------------------------------
+   23. KEYBOARD SHORTCUTS HELP
+---------------------------------------------------------- */
+function toggleKbHelp() {
+  const open = kbHelpOverlay.classList.toggle("open");
+  kbHelpOverlay.setAttribute("aria-hidden", String(!open));
+  if (open) kbHelpClose.focus();
+}
+function closeKbHelp() {
+  kbHelpOverlay.classList.remove("open");
+  kbHelpOverlay.setAttribute("aria-hidden", "true");
+}
+kbHelpClose.addEventListener("click", closeKbHelp);
+kbHelpOverlay.addEventListener("click", (e) => {
+  if (e.target === kbHelpOverlay) closeKbHelp();
+});
+
+/* ----------------------------------------------------------
+   24. DICTIONARY & SYNONYMS
+   Free Dictionary API: https://api.dictionaryapi.dev
+   Triggered by double-clicking a word in targetText.
+---------------------------------------------------------- */
+const DICT_LANG_MAP = {
+  en:"en", fr:"fr", es:"es", de:"de", it:"it", pt:"pt",
+  ru:"ru", hi:"hi", ar:"ar", ja:"ja", ko:"ko", nl:"nl",
+};
+
+async function fetchDictionary(word, lang) {
+  const dictLang = DICT_LANG_MAP[lang];
+  if (!dictLang) { showDictError(`Dictionnaire non disponible pour cette langue.`); return; }
+
+  openDictPanel(word);
+
+  try {
+    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/${dictLang}/${encodeURIComponent(word.toLowerCase())}`);
+    if (res.status === 404) { showDictNotFound(word); return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    renderDictData(data);
+  } catch (err) {
+    showDictError("Impossible de contacter le dictionnaire.");
+    console.warn("[OpenTrad] Dictionary error:", err);
+  }
+}
+
+function openDictPanel(word) {
+  dictWordBadge.textContent = word;
+  dictBody.innerHTML = `<p class="dict-loading">Recherche de « ${escapeHtml(word)} »…</p>`;
+  dictPanel.classList.add("open");
+  dictPanel.setAttribute("aria-hidden", "false");
+}
+
+function closeDictPanel() {
+  dictPanel.classList.remove("open");
+  dictPanel.setAttribute("aria-hidden", "true");
+}
+dictCloseBtn.addEventListener("click", closeDictPanel);
+
+function showDictError(msg) {
+  dictBody.innerHTML = `<p class="dict-error">⚠ ${escapeHtml(msg)}</p>`;
+}
+function showDictNotFound(word) {
+  dictBody.innerHTML = `<p class="dict-not-found">Aucune définition trouvée pour « ${escapeHtml(word)} ».</p>`;
+}
+
+function renderDictData(data) {
+  if (!data || !data.length) { showDictNotFound(""); return; }
+  const entry = data[0];
+  let html = "";
+
+  // Phonetic
+  const phonetic = entry.phonetics?.find(p => p.text)?.text;
+  if (phonetic) {
+    html += `<p style="font-size:.75rem;color:var(--text-muted);margin-bottom:.6rem">${escapeHtml(phonetic)}</p>`;
+  }
+
+  (entry.meanings || []).slice(0, 4).forEach(meaning => {
+    html += `<div class="dict-meaning">`;
+    html += `<span class="dict-pos">${escapeHtml(meaning.partOfSpeech || "")}</span>`;
+
+    (meaning.definitions || []).slice(0, 2).forEach(def => {
+      html += `<p class="dict-def">${escapeHtml(def.definition || "")}</p>`;
+      if (def.example) {
+        html += `<p class="dict-example">"${escapeHtml(def.example)}"</p>`;
+      }
+    });
+
+    const syns = (meaning.synonyms || []).slice(0, 6);
+    const ants = (meaning.antonyms || []).slice(0, 4);
+    if (syns.length || ants.length) {
+      html += `<div class="dict-synonyms">`;
+      if (syns.length) {
+        html += `<span class="dict-syn-label">Syn :</span>`;
+        syns.forEach(s => {
+          html += `<button class="dict-syn-tag" data-word="${escapeHtml(s)}">${escapeHtml(s)}</button>`;
+        });
+      }
+      if (ants.length) {
+        html += `<span class="dict-syn-label" style="margin-left:.4rem">Ant :</span>`;
+        ants.forEach(a => {
+          html += `<button class="dict-syn-tag" style="border-color:var(--spell-error);color:var(--spell-error)" data-word="${escapeHtml(a)}">${escapeHtml(a)}</button>`;
+        });
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+
+  dictBody.innerHTML = html;
+
+  // Click on synonym tag — look it up
+  dictBody.querySelectorAll(".dict-syn-tag").forEach(btn => {
+    btn.addEventListener("click", () => {
+      fetchDictionary(btn.dataset.word, targetLang.value);
+    });
+  });
+}
+
+// Trigger on double-click in target output
+targetText.addEventListener("dblclick", () => {
+  const sel = window.getSelection()?.toString().trim();
+  if (sel && sel.length >= 2 && sel.length <= 40 && !sel.includes(" ")) {
+    fetchDictionary(sel, targetLang.value);
+  }
+});
+
+// Trigger on double-click in source textarea
+sourceText.addEventListener("dblclick", () => {
+  const sel = window.getSelection()?.toString().trim()
+           || sourceText.value.slice(sourceText.selectionStart, sourceText.selectionEnd).trim();
+  const word = sel;
+  if (word && word.length >= 2 && word.length <= 40 && !word.includes(" ")) {
+    const lang = sourceLang.value === "auto" ? "en" : sourceLang.value;
+    fetchDictionary(word, lang);
+  }
+});
+
+// Also trigger on single word selection after mouseup
+targetText.addEventListener("mouseup", () => {
+  const sel = window.getSelection()?.toString().trim();
+  if (sel && sel.length >= 2 && sel.split(/\s+/).length === 1 && sel.length <= 40) {
+    // Small delay so selection settles
+    setTimeout(() => {
+      const currentSel = window.getSelection()?.toString().trim();
+      if (currentSel === sel) fetchDictionary(sel, targetLang.value);
+    }, 400);
+  }
+});
+
+/* ----------------------------------------------------------
+   25. CONVERSATION MODE
+   Split-screen view for face-to-face translation.
+   Top half rotated 180° for the person opposite.
+   Web Speech API for continuous voice recognition.
+---------------------------------------------------------- */
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+let convLangTop    = "fr";
+let convLangBottom = "en";
+let convRecTop     = null;
+let convRecBottom  = null;
+let convListeningTop    = false;
+let convListeningBottom = false;
+
+function toggleConvMode() {
+  const isOpen = convOverlay.classList.contains("open");
+  if (isOpen) closeConvMode();
+  else openConvMode();
+}
+
+function openConvMode() {
+  // Sync with current lang selections
+  convLangTop    = sourceLang.value === "auto" ? "fr" : sourceLang.value;
+  convLangBottom = targetLang.value;
+  updateConvBar();
+  convOverlay.classList.add("open");
+  convOverlay.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function closeConvMode() {
+  stopConvRec("top");
+  stopConvRec("bottom");
+  convOverlay.classList.remove("open");
+  convOverlay.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+
+function updateConvBar() {
+  const getName = (code) => {
+    const opt = document.querySelector(`#sourceLang option[value="${code}"]`)
+             || document.querySelector(`#targetLang option[value="${code}"]`);
+    if (!opt) return code.toUpperCase();
+    return opt.textContent.replace(/^[^\s]+ /, "");
+  };
+  convBarLangs.textContent = `${getName(convLangTop)} ↔ ${getName(convLangBottom)}`;
+}
+
+convModeBtn.addEventListener("click", openConvMode);
+convCloseBtn.addEventListener("click", closeConvMode);
+
+convSwapLangs.addEventListener("click", () => {
+  [convLangTop, convLangBottom] = [convLangBottom, convLangTop];
+  updateConvBar();
+  // Swap displayed texts
+  const tmp = convTextTop.dataset.raw || "";
+  convTextTop.dataset.raw    = convTextBottom.dataset.raw || "";
+  convTextBottom.dataset.raw = tmp;
+  renderConvText("top",    convTextTop.dataset.raw);
+  renderConvText("bottom", convTextBottom.dataset.raw);
+});
+
+convClearBtn2.addEventListener("click", () => {
+  renderConvText("top", "");
+  renderConvText("bottom", "");
+});
+
+function renderConvText(side, text) {
+  const el = side === "top" ? convTextTop : convTextBottom;
+  el.dataset.raw = text || "";
+  if (text && text.trim()) {
+    el.textContent = text;
+  } else {
+    el.innerHTML = `<span class="conv-text-placeholder">Appuyez sur le micro et parlez…</span>`;
+  }
+}
+
+async function translateConv(text, fromLang, toLang) {
+  try {
+    const prefs = loadPrefs();
+    const selectedApi = prefs.api || "auto";
+    if (selectedApi === "auto" || selectedApi === "google") {
+      try { return await translateGoogle(text, fromLang, toLang); } catch {}
+    }
+    if (selectedApi === "auto" || selectedApi === "mymemory") {
+      try { return await translateMyMemory(text, fromLang, toLang); } catch {}
+    }
+  } catch {}
+  return null;
+}
+
+function stopConvRec(side) {
+  if (side === "top" && convRecTop) {
+    try { convRecTop.stop(); } catch {}
+    convRecTop = null;
+    convListeningTop = false;
+    convMicTop.classList.remove("listening");
+  }
+  if (side === "bottom" && convRecBottom) {
+    try { convRecBottom.stop(); } catch {}
+    convRecBottom = null;
+    convListeningBottom = false;
+    convMicBottom.classList.remove("listening");
+  }
+}
+
+function startConvRec(side) {
+  if (!SpeechRecognition) {
+    alert("Reconnaissance vocale non supportée dans ce navigateur (essayez Chrome/Edge).");
+    return;
+  }
+  // Stop the other side first
+  stopConvRec(side === "top" ? "bottom" : "top");
+
+  const lang = side === "top" ? convLangTop : convLangBottom;
+  const toLang = side === "top" ? convLangBottom : convLangTop;
+  const micBtn = side === "top" ? convMicTop : convMicBottom;
+  const outputEl = side === "top" ? convTextBottom : convTextTop;
+
+  const rec = new SpeechRecognition();
+  rec.continuous = false;
+  rec.interimResults = true;
+  rec.lang = LANG_TO_LOCALE[lang] || lang;
+
+  if (side === "top") { convRecTop = rec; convListeningTop = true; }
+  else { convRecBottom = rec; convListeningBottom = true; }
+  micBtn.classList.add("listening");
+
+  rec.onresult = async (event) => {
+    let interim = "";
+    let final   = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) final += t;
+      else interim += t;
+    }
+
+    const display = final || interim;
+    // Show spoken text on the speaker's side
+    const speakerEl = side === "top" ? convTextTop : convTextBottom;
+    if (display) speakerEl.textContent = display;
+
+    // Translate final result
+    if (final.trim()) {
+      outputEl.innerHTML = `<span class="conv-text-placeholder">Traduction…</span>`;
+      const result = await translateConv(final.trim(), lang, toLang);
+      if (result) {
+        renderConvText(side === "top" ? "bottom" : "top", result);
+      }
+    }
+  };
+
+  rec.onend = () => {
+    stopConvRec(side);
+  };
+
+  rec.onerror = (e) => {
+    console.warn("[OpenTrad] Speech error:", e.error);
+    stopConvRec(side);
+  };
+
+  try { rec.start(); } catch (e) { stopConvRec(side); }
+}
+
+convMicTop.addEventListener("click", () => {
+  if (convListeningTop) stopConvRec("top");
+  else startConvRec("top");
+});
+
+convMicBottom.addEventListener("click", () => {
+  if (convListeningBottom) stopConvRec("bottom");
+  else startConvRec("bottom");
+});

@@ -49,7 +49,6 @@
       <span class="logo-icon">◈</span>
       <div class="logo-group">
         <span class="logo-text">Open<em>Trad</em></span>
-        <span class="logo-tagline" data-i18n="heroSub">Traducteur gratuit · Hors-ligne</span>
       </div>
     </div>
     <!-- Dynamic connection/API info bar (Material You style) -->
@@ -59,6 +58,12 @@
       <button id="focusBtn" class="icon-btn" title="Mode concentration" aria-label="Mode concentration" aria-pressed="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+        </svg>
+      </button>
+      <!-- Conversation mode -->
+      <button id="convModeBtn" class="icon-btn conv-btn-header" title="Mode conversation (Ctrl+Shift+V)" aria-label="Mode conversation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
       </button>
       <!-- History -->
@@ -152,13 +157,6 @@
           <option value="id">🇮🇩 Indonésien</option>
         </select>
         <div class="panel-actions">
-          <!-- Panel resize -->
-          <button id="panelSizeBtn" class="icon-btn icon-btn--small" title="Agrandir les cases" aria-label="Agrandir les cases" data-size="normal">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
-              <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
-            </svg>
-          </button>
           <!-- Font size toggle -->
           <button id="fontSizeBtn" class="icon-btn icon-btn--small" title="Agrandir le texte" aria-label="Changer la taille du texte" data-size="normal">
             <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
@@ -313,6 +311,24 @@
 
       <div id="targetText" class="target-output" role="status" aria-live="polite" aria-label="Texte traduit">
         <span class="placeholder-hint" data-i18n="targetPlaceholder">La traduction apparaîtra ici…</span>
+      </div>
+
+      <!-- Dictionary / Details Panel -->
+      <div class="dict-hint-wrap">
+        <p class="dict-hint">Double-cliquez un mot pour voir sa définition</p>
+      </div>
+      <div id="dictPanel" class="dict-panel" aria-hidden="true">
+        <div class="dict-panel-header">
+          <strong>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dictionnaire &amp; Synonymes
+            <span id="dictWordBadge" class="dict-word-badge"></span>
+          </strong>
+          <button id="dictCloseBtn" class="dict-close-btn" aria-label="Fermer">✕</button>
+        </div>
+        <div id="dictBody" class="dict-body">
+          <p class="dict-loading">Recherche…</p>
+        </div>
       </div>
 
       <div class="panel-footer panel-footer--right">
@@ -499,6 +515,86 @@
     <span class="conn-toast-dot"></span>
     <span id="connToastMsg">Connecté</span>
   </div>
+
+  <!-- ══════════════════════════════════════════
+       CONVERSATION MODE OVERLAY
+  ══════════════════════════════════════════ -->
+  <div id="convOverlay" class="conv-overlay" aria-hidden="true" role="dialog" aria-label="Mode conversation">
+    <!-- Top half (rotated for person opposite) -->
+    <div class="conv-half conv-half--top">
+      <div id="convTextTop" class="conv-text">
+        <span class="conv-text-placeholder">Appuyez sur le micro et parlez…</span>
+      </div>
+      <button id="convMicTop" class="conv-mic-btn" aria-label="Microphone personne du haut">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Center bar -->
+    <div class="conv-bar">
+      <span id="convBarLangs" class="conv-bar-langs">FR ↔ EN</span>
+      <div class="conv-bar-actions">
+        <button id="convSwapLangs" class="conv-action-btn">⇄ Inverser</button>
+        <button id="convClearBtn" class="conv-action-btn">✕ Effacer</button>
+        <button id="convCloseBtn" class="conv-close-btn" aria-label="Fermer le mode conversation">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom half (normal orientation) -->
+    <div class="conv-half conv-half--bottom">
+      <div id="convTextBottom" class="conv-text">
+        <span class="conv-text-placeholder">Appuyez sur le micro et parlez…</span>
+      </div>
+      <button id="convMicBottom" class="conv-mic-btn" aria-label="Microphone personne du bas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       KEYBOARD SHORTCUTS HELP
+  ══════════════════════════════════════════ -->
+  <div id="kbHelpOverlay" class="kb-help-overlay" aria-hidden="true" role="dialog" aria-label="Raccourcis clavier">
+    <div class="kb-help-box">
+      <div class="kb-help-title">
+        ⌨ Raccourcis clavier
+        <button id="kbHelpClose" class="kb-help-close" aria-label="Fermer">✕</button>
+      </div>
+
+      <div class="kb-group-title">Traduction</div>
+      <div class="kb-row"><span>Lancer la traduction</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>Enter</kbd></span></div>
+      <div class="kb-row"><span>Inverser les langues</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>S</kbd></span></div>
+      <div class="kb-row"><span>Effacer le texte</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>L</kbd></span></div>
+      <div class="kb-row"><span>Copier la traduction</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>C</kbd></span></div>
+
+      <div class="kb-group-title">Interface</div>
+      <div class="kb-row"><span>Historique</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>H</kbd></span></div>
+      <div class="kb-row"><span>Paramètres</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>,</kbd></span></div>
+      <div class="kb-row"><span>Mode concentration</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>K</kbd></span></div>
+      <div class="kb-row"><span>Mode conversation</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>V</kbd></span></div>
+      <div class="kb-row"><span>Fermer / Annuler</span><span class="kb-keys"><kbd>Esc</kbd></span></div>
+
+      <div class="kb-group-title">Mise en forme</div>
+      <div class="kb-row"><span>Gras (résultat)</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>B</kbd></span></div>
+      <div class="kb-row"><span>Souligner (résultat)</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>U</kbd></span></div>
+
+      <div class="kb-group-title">Aide</div>
+      <div class="kb-row"><span>Afficher cette aide</span><span class="kb-keys"><kbd>?</kbd></span></div>
+    </div>
+  </div>
+
+  <!-- Shortcut action toast -->
+  <div id="shortcutToast" class="shortcut-toast" aria-live="polite"></div>
 
   <script src="app.js"></script>
 </body>
