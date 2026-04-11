@@ -111,6 +111,41 @@ const HISTORY_MAX    = 10;
 const PREFS_KEY      = "opentrad-prefs";
 
 /* ----------------------------------------------------------
+   API COOLDOWN SYSTEM
+   If an API returns 429 (rate limit) or 5xx errors, it is
+   marked as unavailable for 5 minutes in localStorage to
+   avoid wasting time on subsequent requests.
+---------------------------------------------------------- */
+const API_COOLDOWN_MS  = 5 * 60 * 1000; // 5 minutes
+const COOLDOWN_KEY     = "opentrad-api-cooldown";
+
+function getApiCooldowns() {
+  try { return JSON.parse(localStorage.getItem(COOLDOWN_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function setApiCooldown(api) {
+  const cooldowns = getApiCooldowns();
+  cooldowns[api]  = Date.now() + API_COOLDOWN_MS;
+  try { localStorage.setItem(COOLDOWN_KEY, JSON.stringify(cooldowns)); } catch { /* ignore */ }
+}
+
+function clearApiCooldown(api) {
+  const cooldowns = getApiCooldowns();
+  delete cooldowns[api];
+  try { localStorage.setItem(COOLDOWN_KEY, JSON.stringify(cooldowns)); } catch { /* ignore */ }
+}
+
+function isApiOnCooldown(api) {
+  const cooldowns = getApiCooldowns();
+  const until = cooldowns[api] || 0;
+  if (Date.now() < until) return true;
+  // Expired — clean up
+  if (until) clearApiCooldown(api);
+  return false;
+}
+
+/* ----------------------------------------------------------
    3. i18n — Internationalisation
    Supported: fr (French) · en (English) · eu (Basque/Euskara)
 ---------------------------------------------------------- */
@@ -509,11 +544,25 @@ function updateCharCount() {
 function showLoading() {
   loadingOverlay.classList.add("active");
   loadingOverlay.setAttribute("aria-hidden", "false");
+  // Skeleton screen: replace target content with animated skeleton lines
+  targetText.innerHTML = `
+    <span class="skeleton-wrap" aria-hidden="true">
+      <span class="skeleton-line" style="width:88%"></span>
+      <span class="skeleton-line" style="width:72%"></span>
+      <span class="skeleton-line" style="width:60%"></span>
+    </span>`;
   clearError(); hideBadge();
 }
 function hideLoading() {
   loadingOverlay.classList.remove("active");
   loadingOverlay.setAttribute("aria-hidden", "true");
+  // Remove skeleton if still present (will be replaced by result or placeholder)
+  const sk = targetText.querySelector(".skeleton-wrap");
+  if (sk) {
+    const prefs = loadPrefs();
+    const t     = I18N[prefs.lang || "fr"] || I18N.fr;
+    targetText.innerHTML = `<span class="placeholder-hint">${t.targetPlaceholder}</span>`;
+  }
 }
 function showError(msg) { errorMsg.textContent = msg; }
 function clearError()   { errorMsg.textContent = ""; }
@@ -535,11 +584,16 @@ async function translateGoogle(text, from, to) {
             + `&sl=${encodeURIComponent(from)}&tl=${encodeURIComponent(to)}&dt=t`
             + `&q=${encodeURIComponent(text)}`;
   const res  = await fetch(url);
+  if (res.status === 429 || res.status >= 500) {
+    setApiCooldown("google");
+    throw new Error(`Google API HTTP ${res.status}`);
+  }
   if (!res.ok) throw new Error(`Google API HTTP ${res.status}`);
   const data = await res.json();
   if (!data || !data[0]) throw new Error("Google: unexpected response");
   const translated = data[0].filter(Boolean).map(c => c[0]).join("");
   if (!translated) throw new Error("Google: empty translation");
+  clearApiCooldown("google"); // Success — reset any previous cooldown
   return translated;
 }
 
@@ -548,11 +602,20 @@ async function translateMyMemory(text, from, to) {
   const url = `https://api.mymemory.translated.net/get`
             + `?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(langPair)}`;
   const res  = await fetch(url);
+  if (res.status === 429 || res.status >= 500) {
+    setApiCooldown("mymemory");
+    throw new Error(`MyMemory HTTP ${res.status}`);
+  }
   if (!res.ok) throw new Error(`MyMemory HTTP ${res.status}`);
   const data = await res.json();
+  if (data.responseStatus === 429) {
+    setApiCooldown("mymemory");
+    throw new Error("MyMemory: quota exceeded");
+  }
   if (data.responseStatus !== 200) throw new Error(`MyMemory: ${data.responseDetails || data.responseStatus}`);
   const translated = data.responseData?.translatedText;
   if (!translated) throw new Error("MyMemory: empty");
+  clearApiCooldown("mymemory");
   return translated;
 }
 
@@ -562,9 +625,14 @@ async function translateLibre(text, from, to) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ q: text, source: from === "auto" ? "auto" : from, target: to, format: "text" }),
   });
+  if (res.status === 429 || res.status >= 500) {
+    setApiCooldown("libre");
+    throw new Error(`LibreTranslate HTTP ${res.status}`);
+  }
   if (!res.ok) throw new Error(`LibreTranslate HTTP ${res.status}`);
   const data = await res.json();
   if (!data.translatedText) throw new Error("LibreTranslate: empty");
+  clearApiCooldown("libre");
   return data.translatedText;
 }
 
@@ -595,17 +663,17 @@ async function translate() {
     let apiUsed = null;
     const selectedApi = prefs.api || "auto";
 
-    if (selectedApi === "auto" || selectedApi === "google") {
+    if ((selectedApi === "auto" || selectedApi === "google") && !isApiOnCooldown("google")) {
       try   { result = await translateGoogle(text, from, to);    apiUsed = "google"; }
       catch { /* fallthrough */ }
     }
 
-    if (!result && (selectedApi === "auto" || selectedApi === "mymemory")) {
+    if (!result && (selectedApi === "auto" || selectedApi === "mymemory") && !isApiOnCooldown("mymemory")) {
       try   { result = await translateMyMemory(text, from, to); apiUsed = "mymemory"; }
       catch { /* fallthrough */ }
     }
 
-    if (!result && (selectedApi === "auto" || selectedApi === "libre")) {
+    if (!result && (selectedApi === "auto" || selectedApi === "libre") && !isApiOnCooldown("libre")) {
       try   { result = await translateLibre(text, from, to);   apiUsed = "libre"; }
       catch { /* fallthrough */ }
     }
@@ -798,12 +866,17 @@ const convModeBtn    = document.getElementById("convModeBtn");
 const convOverlay    = document.getElementById("convOverlay");
 const convMicTop     = document.getElementById("convMicTop");
 const convMicBottom  = document.getElementById("convMicBottom");
+const convTtsTop     = document.getElementById("convTtsTop");
+const convTtsBottom  = document.getElementById("convTtsBottom");
+const convCloseMobile = document.getElementById("convCloseMobile");
 const convTextTop    = document.getElementById("convTextTop");
 const convTextBottom = document.getElementById("convTextBottom");
 const convBarLangs   = document.getElementById("convBarLangs");
 const convSwapLangs  = document.getElementById("convSwapLangs");
 const convClearBtn2  = document.getElementById("convClearBtn");
 const convCloseBtn   = document.getElementById("convCloseBtn");
+const convLangSelectTop    = document.getElementById("convLangTop");
+const convLangSelectBottom = document.getElementById("convLangBottom");
 const dictPanel      = document.getElementById("dictPanel");
 const dictBody       = document.getElementById("dictBody");
 const dictWordBadge  = document.getElementById("dictWordBadge");
@@ -1285,7 +1358,7 @@ function showSpellTooltip(e, mark, interactive = false) {
   const sorted = [...spellErrors].sort((a, b) => a.offset - b.offset);
   const err    = sorted[idx];
   if (!err) return;
-  let html = `<strong>${err.message}</strong>`;
+  let html = `<strong>${escapeHtml(err.message)}</strong>`;
   if (err.suggestions.length > 0) {
     if (interactive) {
       html += `<div class="spell-suggestions">`;
@@ -1886,6 +1959,9 @@ function openConvMode() {
   // Sync with current lang selections
   convLangTop    = sourceLang.value === "auto" ? "fr" : sourceLang.value;
   convLangBottom = targetLang.value;
+  // Sync the in-overlay language selects
+  if (convLangSelectTop)    convLangSelectTop.value    = convLangTop;
+  if (convLangSelectBottom) convLangSelectBottom.value = convLangBottom;
   updateConvBar();
   convOverlay.classList.add("open");
   convOverlay.setAttribute("aria-hidden", "false");
@@ -1908,13 +1984,33 @@ function updateConvBar() {
     return opt.textContent.replace(/^[^\s]+ /, "");
   };
   convBarLangs.textContent = `${getName(convLangTop)} ↔ ${getName(convLangBottom)}`;
+  // Keep selects in sync
+  if (convLangSelectTop    && convLangSelectTop.value    !== convLangTop)    convLangSelectTop.value    = convLangTop;
+  if (convLangSelectBottom && convLangSelectBottom.value !== convLangBottom) convLangSelectBottom.value = convLangBottom;
 }
 
 convModeBtn.addEventListener("click", openConvMode);
 convCloseBtn.addEventListener("click", closeConvMode);
+if (convCloseMobile) convCloseMobile.addEventListener("click", closeConvMode);
+
+// TTS in conversation mode
+if (convTtsTop) {
+  convTtsTop.addEventListener("click", () => {
+    const text = convTextTop.dataset.raw || convTextTop.textContent.trim();
+    if (text) speak(text, convLangTop, convTtsTop);
+  });
+}
+if (convTtsBottom) {
+  convTtsBottom.addEventListener("click", () => {
+    const text = convTextBottom.dataset.raw || convTextBottom.textContent.trim();
+    if (text) speak(text, convLangBottom, convTtsBottom);
+  });
+}
 
 convSwapLangs.addEventListener("click", () => {
   [convLangTop, convLangBottom] = [convLangBottom, convLangTop];
+  if (convLangSelectTop)    convLangSelectTop.value    = convLangTop;
+  if (convLangSelectBottom) convLangSelectBottom.value = convLangBottom;
   updateConvBar();
   // Swap displayed texts
   const tmp = convTextTop.dataset.raw || "";
@@ -1928,6 +2024,22 @@ convClearBtn2.addEventListener("click", () => {
   renderConvText("top", "");
   renderConvText("bottom", "");
 });
+
+// Language selects inside conversation overlay
+if (convLangSelectTop) {
+  convLangSelectTop.addEventListener("change", () => {
+    convLangTop = convLangSelectTop.value;
+    updateConvBar();
+    stopConvRec("top");
+  });
+}
+if (convLangSelectBottom) {
+  convLangSelectBottom.addEventListener("change", () => {
+    convLangBottom = convLangSelectBottom.value;
+    updateConvBar();
+    stopConvRec("bottom");
+  });
+}
 
 function renderConvText(side, text) {
   const el = side === "top" ? convTextTop : convTextBottom;
