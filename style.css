@@ -515,6 +515,17 @@ body {
   min-height: 100vh;
 }
 
+/* Accent-colored body gradients */
+[data-theme="light"][data-accent="blue"] body   { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #e0f2fe 100%); min-height: 100vh; }
+[data-theme="light"][data-accent="purple"] body { background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 50%, #f3e8ff 100%); min-height: 100vh; }
+[data-theme="light"][data-accent="green"] body  { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #ecfdf5 100%); min-height: 100vh; }
+[data-theme="light"][data-accent="red"] body    { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 50%, #fff1f2 100%); min-height: 100vh; }
+
+[data-theme="dark"][data-accent="blue"] body   { background: linear-gradient(135deg, #030c1a 0%, #071629 55%, #020d22 100%); min-height: 100vh; }
+[data-theme="dark"][data-accent="purple"] body { background: linear-gradient(135deg, #0a0514 0%, #180830 55%, #08051a 100%); min-height: 100vh; }
+[data-theme="dark"][data-accent="green"] body  { background: linear-gradient(135deg, #011208 0%, #021b0d 55%, #000f06 100%); min-height: 100vh; }
+[data-theme="dark"][data-accent="red"] body    { background: linear-gradient(135deg, #140404 0%, #200606 55%, #100303 100%); min-height: 100vh; }
+
 /* Material You body */
 [data-theme="material"] body {
   background: linear-gradient(160deg, #fef7ff 0%, #f3edf7 60%, #e8def8 100%);
@@ -2122,20 +2133,20 @@ body.history-open {
   display: flex; gap: .6rem; align-items: center;
 }
 .conv-action-btn {
-  background: rgba(255,255,255,.12);
-  border: 1px solid rgba(255,255,255,.18);
-  color: #fff;
+  background: rgba(128,128,128,.14);
+  border: 1px solid rgba(128,128,128,.22);
+  color: var(--header-text);
   border-radius: var(--radius-sm);
   padding: .35rem .75rem;
   font-size: .74rem;
   cursor: pointer;
   transition: background .2s;
 }
-.conv-action-btn:hover { background: rgba(255,255,255,.22); }
+.conv-action-btn:hover { background: rgba(128,128,128,.26); }
 .conv-close-btn {
-  background: rgba(255,255,255,.12);
-  border: 1px solid rgba(255,255,255,.18);
-  color: #fff;
+  background: rgba(128,128,128,.14);
+  border: 1px solid rgba(128,128,128,.22);
+  color: var(--header-text);
   border-radius: 50%;
   width: 34px; height: 34px;
   display: flex; align-items: center; justify-content: center;

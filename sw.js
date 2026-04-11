@@ -7,15 +7,16 @@
 ============================================================= */
 
 const CACHE_NAME  = "opentrad-v2";
-const OFFLINE_URL = "/index.html";
+const OFFLINE_URL = "/OpenTrad/index.html";
+const BASE        = "/OpenTrad";
 
 // Files to pre-cache on install (app shell)
 const PRECACHE_URLS = [
-  "/",
-  "/index.html",
-  "/style.css",
-  "/app.js",
-  "/manifest.json",
+  "/OpenTrad/",
+  "/OpenTrad/index.html",
+  "/OpenTrad/style.css",
+  "/OpenTrad/app.js",
+  "/OpenTrad/manifest.json",
   // Google Fonts CSS (font binaries are cached at runtime via cacheFirst)
   "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap",
 ];
@@ -99,7 +100,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // ── App Shell (same origin) → Cache First ─────────────────
-  if (url.origin === self.location.origin) {
+  if (url.origin === self.location.origin && url.pathname.startsWith(BASE)) {
     event.respondWith(cacheFirst(request, OFFLINE_URL));
     return;
   }
