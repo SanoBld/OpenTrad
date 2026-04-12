@@ -1816,7 +1816,7 @@ function init() {
   syncSettingsUI();   // Sync settings buttons
   initHistoryTabs();  // Wire history tab buttons
 
-  // Custom searchable language selects
+  // Custom searchable language selects (built from static list first)
   buildCustomSelect(sourceLang);
   buildCustomSelect(targetLang);
 
@@ -1824,9 +1824,198 @@ function init() {
 
   // Ping-based connection check on load (3s auto-dismiss if connected)
   checkInitialConnection();
+
+  // Dynamic language discovery — enriches the selects after load
+  fetchAndPopulateLangs();
+
+  // Wire dict sidebar toggle button
+  initDictSidebar();
 }
 
 init();
+
+/* ----------------------------------------------------------
+   23. DYNAMIC LANGUAGE DISCOVERY
+   Fetches available languages from MyMemory at startup
+   and enriches the source/target <select> elements.
+   Falls back silently to the hardcoded list on error.
+---------------------------------------------------------- */
+const KNOWN_LANG_CODES = new Set([
+  "auto","fr","en","es","de","it","pt","ru","zh","ja","ko","ar",
+  "hi","nl","pl","sv","tr","uk","vi","id"
+]);
+
+// Emoji flags mapped to common lang codes
+const LANG_FLAGS = {
+  fr:"🇫🇷", en:"🇬🇧", es:"🇪🇸", de:"🇩🇪", it:"🇮🇹", pt:"🇵🇹",
+  ru:"🇷🇺", zh:"🇨🇳", ja:"🇯🇵", ko:"🇰🇷", ar:"🇸🇦", hi:"🇮🇳",
+  nl:"🇳🇱", pl:"🇵🇱", sv:"🇸🇪", tr:"🇹🇷", uk:"🇺🇦", vi:"🇻🇳",
+  id:"🇮🇩", cs:"🇨🇿", ro:"🇷🇴", hu:"🇭🇺", el:"🇬🇷", he:"🇮🇱",
+  th:"🇹🇭", da:"🇩🇰", fi:"🇫🇮", no:"🇳🇴", bg:"🇧🇬", hr:"🇭🇷",
+  sk:"🇸🇰", sl:"🇸🇮", et:"🇪🇪", lv:"🇱🇻", lt:"🇱🇹", ca:"🇪🇸",
+  ms:"🇲🇾", fa:"🇮🇷", ur:"🇵🇰", bn:"🇧🇩", ta:"🇮🇳", sw:"🇰🇪",
+  af:"🇿🇦", sq:"🇦🇱", hy:"🇦🇲", az:"🇦🇿", eu:"🏴", be:"🇧🇾",
+  cy:"🏴󠁧󠁢󠁷󠁬󠁳󠁿", ga:"🇮🇪", gl:"🇪🇸", ka:"🇬🇪", is:"🇮🇸",
+  mk:"🇲🇰", mn:"🇲🇳", mt:"🇲🇹", my:"🇲🇲", ne:"🇳🇵", si:"🇱🇰",
+  sr:"🇷🇸", tl:"🇵🇭", uz:"🇺🇿", kk:"🇰🇿", km:"🇰🇭",
+};
+
+async function fetchAndPopulateLangs() {
+  // Try MyMemory /languages endpoint
+  try {
+    const res = await fetch("https://api.mymemory.translated.net/languages", {
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!res.ok) throw new Error("MyMemory languages HTTP " + res.status);
+    const data = await res.json();
+    // MyMemory returns { responseData: { [code]: "Name" } }
+    const langMap = data.responseData;
+    if (!langMap || typeof langMap !== "object") throw new Error("Unexpected format");
+
+    // Build new options: start with auto (source only), then merge
+    const newEntries = Object.entries(langMap)
+      .filter(([code]) => code && code.length >= 2)
+      .map(([code, name]) => ({ code, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    if (newEntries.length < 5) throw new Error("Too few langs");
+
+    injectNewLangs(newEntries);
+  } catch {
+    // Silently keep hardcoded list
+  }
+}
+
+function injectNewLangs(entries) {
+  // Build a map of existing options
+  const existingSource = new Map(
+    Array.from(sourceLang.options).map(o => [o.value, o])
+  );
+  const existingTarget = new Map(
+    Array.from(targetLang.options).map(o => [o.value, o])
+  );
+
+  entries.forEach(({ code, name }) => {
+    if (code === "auto") return;
+    const flag  = LANG_FLAGS[code] || "🌐";
+    const label = `${flag} ${name}`;
+
+    if (!existingSource.has(code)) {
+      const opt = document.createElement("option");
+      opt.value = code;
+      opt.textContent = label;
+      sourceLang.appendChild(opt);
+    }
+    if (!existingTarget.has(code)) {
+      const opt = document.createElement("option");
+      opt.value = code;
+      opt.textContent = label;
+      targetLang.appendChild(opt);
+    }
+  });
+
+  // Rebuild custom selects to reflect new options
+  rebuildCustomSelect(sourceLang);
+  rebuildCustomSelect(targetLang);
+}
+
+/** Rebuild an already-built custom select after new <option>s were appended */
+function rebuildCustomSelect(nativeSelect) {
+  const wrap = nativeSelect.closest(".cselect-wrap");
+  if (!wrap) return;
+
+  // Re-render the list (search is already wired — just refresh render)
+  const list = wrap.querySelector(".cselect-list");
+  if (!list) return;
+
+  // Trigger a fresh render of the list with current filter (empty = show all)
+  const search = wrap.querySelector(".cselect-search");
+  const filter = search ? search.value : "";
+  const q = filter.toLowerCase();
+
+  list.innerHTML = "";
+  Array.from(nativeSelect.options).forEach(o => {
+    if (q && !o.textContent.toLowerCase().includes(q)) return;
+    const li = document.createElement("li");
+    li.className   = "cselect-opt";
+    li.textContent = o.textContent.trim();
+    li.dataset.value = o.value;
+    li.setAttribute("role", "option");
+    li.setAttribute("aria-selected", String(o.value === nativeSelect.value));
+    if (o.value === nativeSelect.value) li.classList.add("selected");
+    li.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      nativeSelect.value = o.value;
+      nativeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      const btn = wrap.querySelector(".cselect-btn");
+      if (btn) btn.textContent = o.textContent.trim();
+      // close
+      const dd = wrap.querySelector(".cselect-dropdown");
+      if (dd) { dd.hidden = true; }
+      const b = wrap.querySelector(".cselect-btn");
+      if (b)  b.setAttribute("aria-expanded", "false");
+    });
+    list.appendChild(li);
+  });
+}
+
+/* ----------------------------------------------------------
+   24. DICT SIDEBAR (3-column layout)
+   Opens the dictionary as a persistent right column instead
+   of an inline panel in the target panel.
+---------------------------------------------------------- */
+function initDictSidebar() {
+  const translatorWrap  = document.querySelector(".translator-wrap");
+  const dictSidebar     = document.getElementById("dictSidebar");
+  const dictToggleBtn   = document.getElementById("dictToggleBtn");
+  const dictSidebarClose= document.getElementById("dictSidebarClose");
+
+  if (!dictToggleBtn || !dictSidebar || !translatorWrap) return;
+
+  dictToggleBtn.addEventListener("click", () => {
+    const isOpen = translatorWrap.classList.toggle("dict-sidebar-open");
+    dictToggleBtn.classList.toggle("active", isOpen);
+    dictToggleBtn.setAttribute("aria-pressed", String(isOpen));
+    dictToggleBtn.title = isOpen ? "Fermer le dictionnaire" : "Ouvrir le dictionnaire";
+    dictSidebar.setAttribute("aria-hidden", String(!isOpen));
+
+    // Move dict panel content into sidebar or back
+    const mainDictPanel  = document.getElementById("dictPanel");
+    const sidebarContent = document.getElementById("dictSidebarContent");
+    if (isOpen && mainDictPanel && sidebarContent) {
+      // Show sidebar; hide inline dict-hint
+      document.querySelector(".dict-hint-wrap")?.style.setProperty("display", "none");
+    } else {
+      document.querySelector(".dict-hint-wrap")?.style.removeProperty("display");
+    }
+  });
+
+  if (dictSidebarClose) {
+    dictSidebarClose.addEventListener("click", () => {
+      translatorWrap.classList.remove("dict-sidebar-open");
+      dictToggleBtn?.classList.remove("active");
+      dictToggleBtn?.setAttribute("aria-pressed", "false");
+      dictSidebar.setAttribute("aria-hidden", "true");
+      document.querySelector(".dict-hint-wrap")?.style.removeProperty("display");
+    });
+  }
+}
+
+/* Override dict panel open behavior to also sync sidebar */
+const _origDictOpen = window._dictPanelOpen;
+document.addEventListener("_dictLoaded", () => {
+  const dictSidebar   = document.getElementById("dictSidebar");
+  const sidebarBody   = document.getElementById("dictSidebarBody");
+  const dictBody      = document.getElementById("dictBody");
+  const dictWordBadge = document.getElementById("dictWordBadge");
+  const sidebarBadge  = document.getElementById("dictSidebarBadge");
+  const translWrap    = document.querySelector(".translator-wrap");
+
+  if (sidebarBody && dictBody && translWrap?.classList.contains("dict-sidebar-open")) {
+    sidebarBody.innerHTML = dictBody.innerHTML;
+    if (sidebarBadge && dictWordBadge) sidebarBadge.textContent = dictWordBadge.textContent;
+  }
+});
 
 /* ----------------------------------------------------------
    CUSTOM SEARCHABLE LANGUAGE SELECT
@@ -2070,8 +2259,18 @@ async function fetchDictionary(word, lang) {
 function openDictPanel(word) {
   dictWordBadge.textContent = word;
   dictBody.innerHTML = `<p class="dict-loading">Recherche de « ${escapeHtml(word)} »…</p>`;
-  dictPanel.classList.add("open");
-  dictPanel.setAttribute("aria-hidden", "false");
+
+  const translWrap = document.querySelector(".translator-wrap");
+  if (translWrap?.classList.contains("dict-sidebar-open")) {
+    // In sidebar mode: update sidebar badge & body, don't open inline panel
+    const sidebarBadge = document.getElementById("dictSidebarBadge");
+    const sidebarBody  = document.getElementById("dictSidebarBody");
+    if (sidebarBadge) sidebarBadge.textContent = word;
+    if (sidebarBody)  sidebarBody.innerHTML = dictBody.innerHTML;
+  } else {
+    dictPanel.classList.add("open");
+    dictPanel.setAttribute("aria-hidden", "false");
+  }
 }
 
 function closeDictPanel() {
@@ -2082,9 +2281,24 @@ dictCloseBtn.addEventListener("click", closeDictPanel);
 
 function showDictError(msg) {
   dictBody.innerHTML = `<p class="dict-error">⚠ ${escapeHtml(msg)}</p>`;
+  syncSidebarDict();
 }
 function showDictNotFound(word) {
   dictBody.innerHTML = `<p class="dict-not-found">Aucune définition trouvée pour « ${escapeHtml(word)} ».</p>`;
+  syncSidebarDict();
+}
+
+/** Mirror dictBody content into the sidebar when sidebar mode is active */
+function syncSidebarDict() {
+  const translWrap   = document.querySelector(".translator-wrap");
+  const sidebarBody  = document.getElementById("dictSidebarBody");
+  if (translWrap?.classList.contains("dict-sidebar-open") && sidebarBody) {
+    sidebarBody.innerHTML = dictBody.innerHTML;
+    // Re-wire synonym clicks in sidebar copy
+    sidebarBody.querySelectorAll(".dict-syn-tag").forEach(btn => {
+      btn.addEventListener("click", () => fetchDictionary(btn.dataset.word, targetLang.value));
+    });
+  }
 }
 
 function renderDictData(data) {
@@ -2138,6 +2352,9 @@ function renderDictData(data) {
       fetchDictionary(btn.dataset.word, targetLang.value);
     });
   });
+
+  // Mirror to sidebar if open
+  syncSidebarDict();
 }
 
 // Trigger on double-click in target output

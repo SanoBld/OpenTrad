@@ -272,6 +272,11 @@
           <option value="id">🇮🇩 Indonésien</option>
         </select>
         <div class="panel-actions">
+          <!-- Dict sidebar toggle -->
+          <button id="dictToggleBtn" class="dict-toggle-btn" title="Ouvrir le dictionnaire" aria-label="Dictionnaire latéral" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dico
+          </button>
           <!-- Keep Formatting toggle -->
           <button id="formatToggle" class="icon-btn icon-btn--small" title="Conserver la mise en forme" aria-label="Conserver la mise en forme" aria-pressed="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -347,6 +352,34 @@
       </div>
     </section>
   </main>
+
+  <!-- ══════════════════════════════════════════
+       DICT SIDEBAR (3rd column — shown when toggled)
+  ══════════════════════════════════════════ -->
+  <script>
+    // Move sidebar inside translator-wrap after DOM is ready
+    document.addEventListener("DOMContentLoaded", function() {
+      const wrap = document.querySelector(".translator-wrap");
+      const sidebar = document.getElementById("dictSidebar");
+      if (wrap && sidebar) wrap.appendChild(sidebar);
+    });
+  </script>
+
+  <div id="dictSidebar" class="dict-sidebar" aria-hidden="true" role="complementary" aria-label="Dictionnaire">
+    <div class="dict-sidebar-header">
+      <span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14" style="vertical-align:middle;margin-right:.3rem"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Dictionnaire &amp; Synonymes
+        <span id="dictSidebarBadge" class="dict-word-badge" style="margin-left:.4rem"></span>
+      </span>
+      <button id="dictSidebarClose" class="dict-sidebar-close" aria-label="Fermer le dictionnaire">✕</button>
+    </div>
+    <div id="dictSidebarBody" class="dict-body" style="border:1.5px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);background:var(--bg-panel-alt);min-height:200px;">
+      <p class="dict-loading" style="font-size:.78rem;color:var(--text-muted);text-align:center;padding:2rem 0">
+        Double-cliquez un mot pour voir sa définition
+      </p>
+    </div>
+  </div>
 
   <!-- ══════════════════════════════════════════
        HISTORY PANEL
