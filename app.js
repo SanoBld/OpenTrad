@@ -102,6 +102,7 @@ let spellErrors        = [];
 let deferredInstall    = null;
 let connToastTimer     = null;
 let keepFormat         = false;
+let lastHighlightWord  = "";  // cross-highlight word sync
 
 const DEBOUNCE_MS    = 500;
 const SPELL_DEBOUNCE = 1000;
@@ -710,6 +711,9 @@ async function translate() {
 
     if (result) {
       targetText.textContent = result;
+      // Clear any cross-highlights since text changed
+      clearSourceHighlights();
+      lastHighlightWord = "";
       showBadge(apiUsed);
       saveToHistory(text, result, from, to);
       updateFavBtn();
@@ -2092,6 +2096,31 @@ function buildCustomSelect(nativeSelect) {
     btn.setAttribute("aria-expanded", "true");
     search.value = "";
     renderList();
+
+    // ── Portal positioning ──────────────────────────────────────
+    // The dropdown lives in <body> (not inside any transformed/filtered
+    // ancestor) so position:fixed works correctly against the viewport.
+    const rect    = btn.getBoundingClientRect();
+    const ddWidth = 260;
+    let   left    = rect.left;
+    // Flip left if it overflows on the right
+    if (left + ddWidth > window.innerWidth - 8) {
+      left = Math.max(4, window.innerWidth - ddWidth - 8);
+    }
+    // Flip up if it overflows at the bottom
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const maxH       = 280; // search + list combined max height
+    if (spaceBelow < maxH && rect.top > maxH) {
+      // Open upward
+      dropdown.style.top    = "";
+      dropdown.style.bottom = (window.innerHeight - rect.top + 4) + "px";
+    } else {
+      dropdown.style.bottom = "";
+      dropdown.style.top    = (rect.bottom + 4) + "px";
+    }
+    dropdown.style.left  = left + "px";
+    dropdown.style.width = Math.min(ddWidth, window.innerWidth - 16) + "px";
+
     search.focus();
     // Scroll selected option into view
     const sel = list.querySelector(".selected");
@@ -2110,9 +2139,9 @@ function buildCustomSelect(nativeSelect) {
 
   search.addEventListener("input", () => renderList(search.value));
 
-  // Close on outside click
+  // Close on outside click — check both wrap AND the body-portalled dropdown
   document.addEventListener("mousedown", (e) => {
-    if (!wrap.contains(e.target)) closeDropdown();
+    if (!wrap.contains(e.target) && !dropdown.contains(e.target)) closeDropdown();
   });
 
   // Keyboard navigation in list
@@ -2153,8 +2182,14 @@ function buildCustomSelect(nativeSelect) {
   nativeSelect.style.display = "none";
   nativeSelect.parentNode.insertBefore(wrap, nativeSelect);
   wrap.appendChild(btn);
-  wrap.appendChild(dropdown);
   wrap.appendChild(nativeSelect); // Keep native in DOM for value reading
+
+  // ── Portal: append dropdown to <body> so position:fixed is never broken
+  // by ancestor transforms / backdrop-filter / will-change.
+  document.body.appendChild(dropdown);
+
+  // Cleanup: remove portal on page unload
+  window.addEventListener("unload", () => dropdown.remove(), { once: true });
 
   // Keep btn in sync when native select changes programmatically
   nativeSelect.addEventListener("change", updateBtn);
@@ -2236,23 +2271,127 @@ kbHelpOverlay.addEventListener("click", (e) => {
 const DICT_LANG_MAP = {
   en:"en", fr:"fr", es:"es", de:"de", it:"it", pt:"pt",
   ru:"ru", hi:"hi", ar:"ar", ja:"ja", ko:"ko", nl:"nl",
+  tr:"tr", pl:"pl", sv:"sv", uk:"uk",
+  zh:"zh", vi:"vi", id:"id",
+};
+
+/* Languages supported via Wiktionary REST API —
+   covers every language shown in the site's selectors.
+   For zh/vi/id/hi/ar/ja/ko the Wiktionary edition may be sparse;
+   we fall back to translating the word to EN and looking it up there. */
+const WIKTIONARY_LANGS = new Set([
+  "fr","de","it","es","pt","ru","nl","pl","sv","tr","uk",
+  "hi","ar","ja","ko","zh","vi","id",
+]);
+
+/* Languages that have reliable Wiktionary REST coverage.
+   Others use the translate-then-EN-lookup fallback. */
+const WIKTIONARY_NATIVE = new Set(["fr","de","it","es","pt","ru","nl","pl","sv","tr","uk"]);
+
+/* Map lang codes to Wiktionary edition subdomains */
+const WIKI_SUBDOMAIN = {
+  fr:"fr", de:"de", it:"it", es:"es", pt:"pt", ru:"ru",
+  nl:"nl", pl:"pl", sv:"sv", tr:"tr", uk:"uk",
+  hi:"hi", ar:"ar", ja:"ja", ko:"ko", zh:"zh",
+  vi:"vi", id:"id",
 };
 
 async function fetchDictionary(word, lang) {
   const dictLang = DICT_LANG_MAP[lang];
-  if (!dictLang) { showDictError(`Dictionnaire non disponible pour cette langue.`); return; }
+  if (!dictLang) { showDictError(`Dictionnaire non disponible pour cette langue (${lang}).`); return; }
 
   openDictPanel(word);
 
+  // ── 1. Free Dictionary API — meilleure couverture pour l'anglais ──
+  if (lang === "en") {
+    try {
+      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`);
+      if (res.status === 404) { showDictNotFound(word); return; }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      renderDictData(data, lang);
+      return;
+    } catch (err) {
+      console.warn("[OpenTrad] Dictionary EN error:", err);
+    }
+  }
+
+  // ── 2. Wiktionary natif — langues à bonne couverture ─────────────
+  if (WIKTIONARY_LANGS.has(lang)) {
+    const subdomain = WIKI_SUBDOMAIN[lang] || lang;
+    const useNative = WIKTIONARY_NATIVE.has(lang);
+
+    // Tentative sur l'édition native de Wiktionary
+    if (useNative) {
+      try {
+        const res = await fetch(
+          `https://${subdomain}.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(word.toLowerCase())}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          renderWiktionaryData(data, word);
+          return;
+        }
+        if (res.status !== 404) throw new Error(`Wiktionary HTTP ${res.status}`);
+      } catch (err) {
+        console.warn(`[OpenTrad] Wiktionary ${subdomain} error:`, err);
+      }
+    }
+
+    // ── 3. Fallback : édition anglaise de Wiktionary pour le mot tel quel
+    //    (marche souvent pour ja/ko/zh/ar/hi avec transcription latine)
+    try {
+      const res = await fetch(
+        `https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(word.toLowerCase())}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        renderWiktionaryData(data, word, /* sourceIsEnWikt */ true);
+        return;
+      }
+    } catch (err) {
+      console.warn("[OpenTrad] Wiktionary EN fallback error:", err);
+    }
+
+    // ── 4. Dernier recours : traduction → EN puis Free Dictionary ────
+    try {
+      const translated = await translateToEnglish(word, lang);
+      if (translated && translated.toLowerCase() !== word.toLowerCase()) {
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(translated.toLowerCase())}`);
+        if (res.ok) {
+          const data = await res.json();
+          // Indicate this is a translated lookup
+          dictBody.innerHTML = `<p style="font-size:.72rem;color:var(--text-muted);margin-bottom:.5rem">
+            📖 Définition via traduction : <em>${escapeHtml(translated)}</em>
+          </p>`;
+          renderDictData(data, "en", /* append */ true);
+          syncSidebarDict();
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("[OpenTrad] Dict translate fallback error:", err);
+    }
+
+    showDictNotFound(word);
+    return;
+  }
+
+  showDictError(`Dictionnaire non disponible pour cette langue.`);
+}
+
+/** Translate a single word to English using the existing API stack */
+async function translateToEnglish(word, sourceLangCode) {
+  if (sourceLangCode === "en") return word;
   try {
-    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/${dictLang}/${encodeURIComponent(word.toLowerCase())}`);
-    if (res.status === 404) { showDictNotFound(word); return; }
+    // Lightweight Google Translate call (single word)
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLangCode}&tl=en&dt=t&q=${encodeURIComponent(word)}`;
+    const res  = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    renderDictData(data);
-  } catch (err) {
-    showDictError("Impossible de contacter le dictionnaire.");
-    console.warn("[OpenTrad] Dictionary error:", err);
+    return data?.[0]?.[0]?.[0] || "";
+  } catch {
+    return "";
   }
 }
 
@@ -2301,7 +2440,7 @@ function syncSidebarDict() {
   }
 }
 
-function renderDictData(data) {
+function renderDictData(data, lang, append = false) {
   if (!data || !data.length) { showDictNotFound(""); return; }
   const entry = data[0];
   let html = "";
@@ -2344,7 +2483,11 @@ function renderDictData(data) {
     html += `</div>`;
   });
 
-  dictBody.innerHTML = html;
+  if (append) {
+    dictBody.innerHTML += html;
+  } else {
+    dictBody.innerHTML = html;
+  }
 
   // Click on synonym tag — look it up
   dictBody.querySelectorAll(".dict-syn-tag").forEach(btn => {
@@ -2357,10 +2500,158 @@ function renderDictData(data) {
   syncSidebarDict();
 }
 
+/** Render Wiktionary REST API response (for French, German, etc.) */
+function renderWiktionaryData(data, word) {
+  // Wiktionary API returns { [lang]: [ { partOfSpeech, language, definitions: [{definition, parsedExamples, synonyms}] } ] }
+  const allEntries = Object.values(data).flat();
+  if (!allEntries.length) { showDictNotFound(word); return; }
+
+  let html = "";
+  allEntries.slice(0, 4).forEach(entry => {
+    if (!entry.definitions?.length) return;
+    html += `<div class="dict-meaning">`;
+    html += `<span class="dict-pos">${escapeHtml(entry.partOfSpeech || "")}</span>`;
+
+    entry.definitions.slice(0, 3).forEach(def => {
+      // Strip HTML tags from definition
+      const cleanDef = (def.definition || "").replace(/<[^>]*>/g, "").trim();
+      if (!cleanDef) return;
+      html += `<p class="dict-def">${escapeHtml(cleanDef)}</p>`;
+      // Example
+      const ex = def.parsedExamples?.[0]?.example || def.examples?.[0];
+      if (ex) {
+        const cleanEx = ex.replace(/<[^>]*>/g, "").trim();
+        if (cleanEx) html += `<p class="dict-example">"${escapeHtml(cleanEx)}"</p>`;
+      }
+    });
+
+    // Synonyms from Wiktionary
+    const syns = (entry.definitions?.[0]?.synonyms || []).slice(0, 6);
+    if (syns.length) {
+      html += `<div class="dict-synonyms"><span class="dict-syn-label">Syn :</span>`;
+      syns.forEach(s => {
+        const label = typeof s === "string" ? s : s.word || "";
+        if (label) html += `<button class="dict-syn-tag" data-word="${escapeHtml(label)}">${escapeHtml(label)}</button>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+
+  if (!html) { showDictNotFound(word); return; }
+  dictBody.innerHTML = html;
+
+  dictBody.querySelectorAll(".dict-syn-tag").forEach(btn => {
+    btn.addEventListener("click", () => fetchDictionary(btn.dataset.word, targetLang.value));
+  });
+
+  syncSidebarDict();
+}
+
+// ── WORD CROSS-HIGHLIGHT SYSTEM ──────────────────────────────
+
+/** Wrap all occurrences of `word` in targetText with <mark class="word-highlight"> */
+function highlightWordInTarget(word) {
+  // Remove previous highlights
+  clearTargetHighlights();
+  if (!word || word.length < 2) return;
+
+  const rawHtml = targetText.innerHTML;
+  // Only highlight if no placeholder
+  if (targetText.querySelector(".placeholder-hint")) return;
+
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex   = new RegExp(`(?<![\\w\\u00C0-\\u024F])(${escaped})(?![\\w\\u00C0-\\u024F])`, "gi");
+  targetText.innerHTML = targetText.innerHTML.replace(
+    /(<[^>]*>)|([^<]+)/g,
+    (match, tag, text) => {
+      if (tag) return tag; // skip HTML tags
+      return text.replace(regex, `<mark class="word-highlight">$1</mark>`);
+    }
+  );
+}
+
+function clearTargetHighlights() {
+  // Unwrap all <mark class="word-highlight"> nodes
+  targetText.querySelectorAll("mark.word-highlight").forEach(mark => {
+    const parent = mark.parentNode;
+    while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+    parent.removeChild(mark);
+  });
+}
+
+/** Highlight word in source textarea via the spell overlay layer */
+function highlightWordInSource(word) {
+  clearSourceHighlights();
+  if (!word || word.length < 2 || !sourceText.value) return;
+
+  const text    = sourceText.value;
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex   = new RegExp(`(?<![\\w\\u00C0-\\u024F])(${escaped})(?![\\w\\u00C0-\\u024F])`, "gi");
+
+  let html   = "";
+  let cursor = 0;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    html += escapeHtml(text.slice(cursor, match.index));
+    html += `<mark class="word-highlight src-highlight">${escapeHtml(match[1])}</mark>`;
+    cursor = match.index + match[1].length;
+  }
+  html += escapeHtml(text.slice(cursor));
+
+  // Use a dedicated overlay (reuse spellOverlay layer idea)
+  let srcHL = document.getElementById("srcHighlightOverlay");
+  if (!srcHL) {
+    srcHL = document.createElement("div");
+    srcHL.id = "srcHighlightOverlay";
+    srcHL.className = "spell-overlay src-hl-overlay";
+    srcHL.setAttribute("aria-hidden", "true");
+    sourceText.parentNode.appendChild(srcHL);
+  }
+  srcHL.innerHTML = html;
+}
+
+function clearSourceHighlights() {
+  const srcHL = document.getElementById("srcHighlightOverlay");
+  if (srcHL) srcHL.innerHTML = "";
+}
+
+// Listen for selection changes
+document.addEventListener("selectionchange", () => {
+  const sel = window.getSelection()?.toString().trim();
+  if (!sel || sel.length < 2 || sel.includes(" ") || sel.length > 60) {
+    if (lastHighlightWord) {
+      clearTargetHighlights();
+      clearSourceHighlights();
+      lastHighlightWord = "";
+    }
+    return;
+  }
+
+  if (sel === lastHighlightWord) return;
+  lastHighlightWord = sel;
+
+  // Determine context: did selection happen in source or target?
+  const anchorNode = window.getSelection()?.anchorNode;
+  const inTarget   = targetText.contains(anchorNode);
+  const inSource   = sourceText === document.activeElement ||
+                     (sourceText.parentElement?.contains(anchorNode));
+
+  if (inTarget) {
+    highlightWordInSource(sel);
+    fetchDictionary(sel, targetLang.value);
+  } else if (inSource) {
+    highlightWordInTarget(sel);
+    const lang = sourceLang.value === "auto" ? "en" : sourceLang.value;
+    fetchDictionary(sel, lang);
+  }
+});
+
 // Trigger on double-click in target output
 targetText.addEventListener("dblclick", () => {
   const sel = window.getSelection()?.toString().trim();
-  if (sel && sel.length >= 2 && sel.length <= 40 && !sel.includes(" ")) {
+  if (sel && sel.length >= 2 && sel.length <= 60 && !sel.includes(" ")) {
+    highlightWordInSource(sel);
     fetchDictionary(sel, targetLang.value);
   }
 });
@@ -2369,24 +2660,23 @@ targetText.addEventListener("dblclick", () => {
 sourceText.addEventListener("dblclick", () => {
   const sel = window.getSelection()?.toString().trim()
            || sourceText.value.slice(sourceText.selectionStart, sourceText.selectionEnd).trim();
-  const word = sel;
-  if (word && word.length >= 2 && word.length <= 40 && !word.includes(" ")) {
+  if (sel && sel.length >= 2 && sel.length <= 60 && !sel.includes(" ")) {
+    highlightWordInTarget(sel);
     const lang = sourceLang.value === "auto" ? "en" : sourceLang.value;
-    fetchDictionary(word, lang);
+    fetchDictionary(sel, lang);
   }
 });
 
-// Also trigger on single word selection after mouseup
-targetText.addEventListener("mouseup", () => {
-  const sel = window.getSelection()?.toString().trim();
-  if (sel && sel.length >= 2 && sel.split(/\s+/).length === 1 && sel.length <= 40) {
-    // Small delay so selection settles
-    setTimeout(() => {
-      const currentSel = window.getSelection()?.toString().trim();
-      if (currentSel === sel) fetchDictionary(sel, targetLang.value);
-    }, 400);
-  }
-});
+// Clear highlights when translation updates
+const _origTranslate = translate;
+// Patch: clear highlights when new translation arrives
+const _patchHighlightOnTranslate = () => {
+  clearTargetHighlights();
+  clearSourceHighlights();
+  lastHighlightWord = "";
+};
+sourceLang.addEventListener("change", _patchHighlightOnTranslate);
+targetLang.addEventListener("change", _patchHighlightOnTranslate);
 
 /* ----------------------------------------------------------
    25. CONVERSATION MODE
