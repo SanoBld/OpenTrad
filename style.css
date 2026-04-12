@@ -2503,3 +2503,246 @@ kbd {
 [data-theme="material-dark"] .fix-all-btn {
   border-radius: 50px;
 }
+
+/* =============================================================
+   ERGONOMIE — Clear inline · Progress bar · Custom select
+                Mobile bottom bar
+============================================================= */
+
+/* ── Clear button contextuel (inside textarea) ─────────────── */
+.textarea-wrap {
+  position: relative;
+}
+
+.clear-inline-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-glass, rgba(128,128,128,.15));
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(.7);
+  transition: opacity .15s, transform .15s, background .15s, color .15s;
+  backdrop-filter: blur(4px);
+}
+
+.clear-inline-btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.clear-inline-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+.clear-inline-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Padding droit sur le textarea pour ne pas masquer le texte sous le bouton */
+#sourceText {
+  padding-right: 42px;
+}
+
+/* ── Barre de progression de traduction ─────────────────────── */
+.transl-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 0 2px 2px 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: width .4s ease, opacity .2s;
+  z-index: 5;
+}
+
+.transl-progress.active {
+  opacity: 1;
+}
+
+.panel--target {
+  position: relative;
+}
+
+/* ── Custom searchable select ────────────────────────────────── */
+.cselect-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.cselect-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 24px 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--bg-input, var(--bg));
+  color: var(--text);
+  font-family: inherit;
+  font-size: .8rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background .15s, border-color .15s;
+  position: relative;
+}
+
+.cselect-btn::after {
+  content: "";
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.cselect-btn:hover,
+.cselect-btn[aria-expanded="true"] {
+  border-color: var(--accent);
+  background: var(--bg-hover, var(--bg));
+}
+
+.cselect-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 200;
+  min-width: 200px;
+  max-width: 240px;
+  background: var(--bg-card, var(--bg));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  overflow: hidden;
+  animation: cselectFadeIn .12s ease;
+}
+
+@keyframes cselectFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cselect-search {
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-input, var(--bg));
+  color: var(--text);
+  font-family: inherit;
+  font-size: .8rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.cselect-search::placeholder { color: var(--text-muted); }
+
+.cselect-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.cselect-opt {
+  padding: 7px 12px;
+  font-size: .82rem;
+  cursor: pointer;
+  color: var(--text);
+  transition: background .1s;
+  outline: none;
+}
+
+.cselect-opt:hover,
+.cselect-opt:focus {
+  background: var(--bg-hover, rgba(128,128,128,.1));
+}
+
+.cselect-opt.selected {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Barre d'actions mobile (bottom sheet) ───────────────────── */
+.mobile-bottom-bar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+  background: var(--bg-card, var(--bg));
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  justify-content: space-around;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 -4px 16px rgba(0,0,0,.08);
+}
+
+.mobile-bar-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-sm, 8px);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: .65rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color .15s, background .15s;
+  min-width: 64px;
+}
+
+.mobile-bar-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mobile-bar-btn:active {
+  background: var(--bg-hover, rgba(128,128,128,.12));
+  color: var(--accent);
+}
+
+@media (max-width: 700px) {
+  .mobile-bottom-bar {
+    display: flex;
+  }
+
+  /* Espace pour éviter que la barre flottante cache le contenu */
+  body {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+}

@@ -536,14 +536,43 @@ function updateCharCount() {
   charCount.classList.remove("near-limit", "at-limit");
   if (len >= MAX_CHARS)             charCount.classList.add("at-limit");
   else if (len >= MAX_CHARS * 0.85) charCount.classList.add("near-limit");
+  // Clear button contextuel : visible seulement si texte présent
+  clearBtn.classList.toggle("visible", len > 0);
 }
 
 /* ----------------------------------------------------------
    9. LOADING / ERROR / BADGE HELPERS
 ---------------------------------------------------------- */
+const translProgress = document.getElementById("translProgress");
+let   translProgressTimer = null;
+
+function startTranslProgress() {
+  if (!translProgress) return;
+  clearTimeout(translProgressTimer);
+  translProgress.style.transition = "none";
+  translProgress.style.width = "0%";
+  translProgress.classList.add("active");
+  // Force reflow
+  void translProgress.offsetWidth;
+  translProgress.style.transition = "width 0.4s ease";
+  translProgress.style.width = "70%";
+}
+
+function finishTranslProgress() {
+  if (!translProgress) return;
+  clearTimeout(translProgressTimer);
+  translProgress.style.transition = "width 0.2s ease";
+  translProgress.style.width = "100%";
+  translProgressTimer = setTimeout(() => {
+    translProgress.classList.remove("active");
+    translProgress.style.width = "0%";
+  }, 250);
+}
+
 function showLoading() {
   loadingOverlay.classList.add("active");
   loadingOverlay.setAttribute("aria-hidden", "false");
+  startTranslProgress();
   // Skeleton screen: replace target content with animated skeleton lines
   targetText.innerHTML = `
     <span class="skeleton-wrap" aria-hidden="true">
@@ -556,6 +585,7 @@ function showLoading() {
 function hideLoading() {
   loadingOverlay.classList.remove("active");
   loadingOverlay.setAttribute("aria-hidden", "true");
+  finishTranslProgress();
   // Remove skeleton if still present (will be replaced by result or placeholder)
   const sk = targetText.querySelector(".skeleton-wrap");
   if (sk) {
@@ -742,8 +772,14 @@ swapBtn.addEventListener("click", () => {
   swapBtn.classList.add("rotating");
   swapBtn.addEventListener("animationend", () => swapBtn.classList.remove("rotating"), { once: true });
 
+  // Haptic feedback
+  navigator.vibrate?.(30);
+
   clearTimeout(debounceTimer);
   translate();
+  // Sync custom selects if present
+  syncCustomSelect(sourceLang);
+  syncCustomSelect(targetLang);
 });
 
 /* ----------------------------------------------------------
@@ -790,6 +826,9 @@ copyBtn.addEventListener("click", async () => {
   if (svg) svg.innerHTML = CHECK_ICON_SVG;
   copyBtn.classList.add("copy-success");
   copyTooltip.classList.add("visible");
+
+  // Haptic feedback
+  navigator.vibrate?.(15);
 
   setTimeout(() => {
     copyTooltip.classList.remove("visible");
@@ -1773,9 +1812,13 @@ function init() {
 
   initTheme();        // Apply theme + accent from prefs
   applyI18n(lang);    // Apply i18n strings
-  updateCharCount();  // Reset char counter
+  updateCharCount();  // Reset char counter (also inits clearBtn visibility)
   syncSettingsUI();   // Sync settings buttons
   initHistoryTabs();  // Wire history tab buttons
+
+  // Custom searchable language selects
+  buildCustomSelect(sourceLang);
+  buildCustomSelect(targetLang);
 
   if (sourceText.value) updateCharCount();
 
@@ -1784,6 +1827,200 @@ function init() {
 }
 
 init();
+
+/* ----------------------------------------------------------
+   CUSTOM SEARCHABLE LANGUAGE SELECT
+   Wraps native <select> with a filterable dropdown.
+   All existing code that reads .value / dispatches 'change'
+   on the native select continues to work unchanged.
+---------------------------------------------------------- */
+function buildCustomSelect(nativeSelect) {
+  if (!nativeSelect) return;
+
+  // Build options array from native select
+  const getOptions = () =>
+    Array.from(nativeSelect.options).map(o => ({ value: o.value, label: o.textContent.trim() }));
+
+  // Create wrapper
+  const wrap = document.createElement("div");
+  wrap.className = "cselect-wrap";
+
+  // Visible trigger button
+  const btn = document.createElement("button");
+  btn.className    = "cselect-btn";
+  btn.type         = "button";
+  btn.setAttribute("aria-haspopup", "listbox");
+  btn.setAttribute("aria-expanded", "false");
+
+  const updateBtn = () => {
+    const opt = nativeSelect.options[nativeSelect.selectedIndex];
+    btn.textContent = opt ? opt.textContent.trim() : "";
+  };
+  updateBtn();
+
+  // Dropdown container
+  const dropdown = document.createElement("div");
+  dropdown.className = "cselect-dropdown";
+  dropdown.setAttribute("role", "listbox");
+  dropdown.hidden = true;
+
+  // Search input
+  const search = document.createElement("input");
+  search.type        = "text";
+  search.className   = "cselect-search";
+  search.placeholder = "Rechercher…";
+  search.setAttribute("aria-label", "Rechercher une langue");
+
+  // Option list
+  const list = document.createElement("ul");
+  list.className = "cselect-list";
+
+  const renderList = (filter = "") => {
+    list.innerHTML = "";
+    const q = filter.toLowerCase();
+    getOptions().forEach(opt => {
+      if (q && !opt.label.toLowerCase().includes(q)) return;
+      const li = document.createElement("li");
+      li.className   = "cselect-opt";
+      li.textContent = opt.label;
+      li.dataset.value = opt.value;
+      li.setAttribute("role", "option");
+      li.setAttribute("aria-selected", String(opt.value === nativeSelect.value));
+      if (opt.value === nativeSelect.value) li.classList.add("selected");
+      li.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        nativeSelect.value = opt.value;
+        nativeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+        updateBtn();
+        closeDropdown();
+      });
+      list.appendChild(li);
+    });
+  };
+
+  const openDropdown = () => {
+    dropdown.hidden = false;
+    btn.setAttribute("aria-expanded", "true");
+    search.value = "";
+    renderList();
+    search.focus();
+    // Scroll selected option into view
+    const sel = list.querySelector(".selected");
+    if (sel) sel.scrollIntoView({ block: "nearest" });
+  };
+
+  const closeDropdown = () => {
+    dropdown.hidden = true;
+    btn.setAttribute("aria-expanded", "false");
+  };
+
+  btn.addEventListener("click", () => {
+    if (!dropdown.hidden) closeDropdown();
+    else openDropdown();
+  });
+
+  search.addEventListener("input", () => renderList(search.value));
+
+  // Close on outside click
+  document.addEventListener("mousedown", (e) => {
+    if (!wrap.contains(e.target)) closeDropdown();
+  });
+
+  // Keyboard navigation in list
+  search.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { closeDropdown(); btn.focus(); }
+    if (e.key === "ArrowDown") {
+      const first = list.querySelector(".cselect-opt");
+      if (first) first.focus();
+      e.preventDefault();
+    }
+  });
+
+  list.addEventListener("keydown", (e) => {
+    const items = [...list.querySelectorAll(".cselect-opt")];
+    const idx   = items.indexOf(document.activeElement);
+    if (e.key === "ArrowDown") { items[idx + 1]?.focus(); e.preventDefault(); }
+    if (e.key === "ArrowUp") {
+      if (idx <= 0) search.focus();
+      else items[idx - 1]?.focus();
+      e.preventDefault();
+    }
+    if (e.key === "Enter" || e.key === " ") {
+      document.activeElement.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+      e.preventDefault();
+    }
+    if (e.key === "Escape") { closeDropdown(); btn.focus(); }
+  });
+
+  // Make list items focusable
+  list.addEventListener("mouseenter", (e) => {
+    if (e.target.classList.contains("cselect-opt")) e.target.setAttribute("tabindex", "0");
+  }, true);
+
+  dropdown.appendChild(search);
+  dropdown.appendChild(list);
+
+  // Insert wrapper before native select, hide native
+  nativeSelect.style.display = "none";
+  nativeSelect.parentNode.insertBefore(wrap, nativeSelect);
+  wrap.appendChild(btn);
+  wrap.appendChild(dropdown);
+  wrap.appendChild(nativeSelect); // Keep native in DOM for value reading
+
+  // Keep btn in sync when native select changes programmatically
+  nativeSelect.addEventListener("change", updateBtn);
+}
+
+// Expose sync helper (used by swapBtn)
+function syncCustomSelect(nativeSelect) {
+  const wrap = nativeSelect.closest(".cselect-wrap")
+             || nativeSelect.parentNode?.querySelector(".cselect-wrap");
+  if (wrap) {
+    const btn = wrap.querySelector(".cselect-btn");
+    if (btn) {
+      const opt = nativeSelect.options[nativeSelect.selectedIndex];
+      if (opt) btn.textContent = opt.textContent.trim();
+    }
+  }
+}
+
+/* ----------------------------------------------------------
+   SWIPE GESTURES — fermeture des panneaux
+   Swipe vers la droite ferme l'historique.
+   Swipe vers le bas ferme les paramètres.
+   Swipe haut/bas ferme le mode conversation.
+---------------------------------------------------------- */
+function addSwipeToDismiss(element, direction, onDismiss) {
+  let startX = 0, startY = 0;
+  element.addEventListener("touchstart", (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  element.addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    const threshold = 60;
+    if (direction === "right"  && dx >  threshold && Math.abs(dy) < threshold) onDismiss();
+    if (direction === "down"   && dy >  threshold && Math.abs(dx) < threshold) onDismiss();
+    if (direction === "up"     && dy < -threshold && Math.abs(dx) < threshold) onDismiss();
+    if (direction === "any"    && (Math.abs(dx) > threshold || Math.abs(dy) > threshold)) onDismiss();
+  }, { passive: true });
+}
+
+addSwipeToDismiss(historyPanel,    "right", closeHistory);
+addSwipeToDismiss(settingsModal,   "down",  closeSettings);
+addSwipeToDismiss(convOverlay,     "any",   closeConvMode);
+
+/* ----------------------------------------------------------
+   MOBILE BOTTOM BAR
+---------------------------------------------------------- */
+const mobileSwapBtn  = document.getElementById("mobileSwapBtn");
+const mobileCopyBtn  = document.getElementById("mobileCopyBtn");
+const mobileShareBtn = document.getElementById("mobileShareBtn");
+
+if (mobileSwapBtn) mobileSwapBtn.addEventListener("click", () => swapBtn.click());
+if (mobileCopyBtn) mobileCopyBtn.addEventListener("click", () => copyBtn.click());
+if (mobileShareBtn) mobileShareBtn.addEventListener("click", () => shareBtn.click());
 
 /* ----------------------------------------------------------
    23. KEYBOARD SHORTCUTS HELP

@@ -9,6 +9,7 @@
 const CACHE_NAME  = "opentrad-v2";
 const OFFLINE_URL = "/OpenTrad/index.html";
 const BASE        = "/OpenTrad";
+const ORIGIN      = "https://sanobld.github.io";
 
 // Files to pre-cache on install (app shell)
 const PRECACHE_URLS = [
@@ -17,6 +18,7 @@ const PRECACHE_URLS = [
   "/OpenTrad/style.css",
   "/OpenTrad/app.js",
   "/OpenTrad/manifest.json",
+  "/OpenTrad/LogoC.png",
   // Google Fonts CSS (font binaries are cached at runtime via cacheFirst)
   "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap",
 ];
