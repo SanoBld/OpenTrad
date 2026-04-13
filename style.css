@@ -710,7 +710,7 @@ body {
   font-family: var(--font-body);
   background: var(--bg);
   color: var(--text);
-  min-height: 100vh;
+  min-height: 100dvh;
   transition: background var(--transition), color var(--transition);
   overflow-x: hidden;
 }
@@ -718,23 +718,23 @@ body {
 /* Glass theme body gradients */
 [data-theme="light"] body {
   background: linear-gradient(135deg, #dbeafe 0%, #ede9fe 45%, #d1fae5 100%);
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 [data-theme="dark"] body {
   background: linear-gradient(135deg, #0a0a14 0%, #130a2e 55%, #0a1828 100%);
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* Accent-colored body gradients */
-[data-theme="light"][data-accent="blue"] body   { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #e0f2fe 100%); min-height: 100vh; }
-[data-theme="light"][data-accent="purple"] body { background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 50%, #f3e8ff 100%); min-height: 100vh; }
-[data-theme="light"][data-accent="green"] body  { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #ecfdf5 100%); min-height: 100vh; }
-[data-theme="light"][data-accent="red"] body    { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 50%, #fff1f2 100%); min-height: 100vh; }
+[data-theme="light"][data-accent="blue"] body   { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #e0f2fe 100%); min-height: 100dvh; }
+[data-theme="light"][data-accent="purple"] body { background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 50%, #f3e8ff 100%); min-height: 100dvh; }
+[data-theme="light"][data-accent="green"] body  { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #ecfdf5 100%); min-height: 100dvh; }
+[data-theme="light"][data-accent="red"] body    { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 50%, #fff1f2 100%); min-height: 100dvh; }
 
-[data-theme="dark"][data-accent="blue"] body   { background: linear-gradient(135deg, #030c1a 0%, #071629 55%, #020d22 100%); min-height: 100vh; }
-[data-theme="dark"][data-accent="purple"] body { background: linear-gradient(135deg, #0a0514 0%, #180830 55%, #08051a 100%); min-height: 100vh; }
-[data-theme="dark"][data-accent="green"] body  { background: linear-gradient(135deg, #011208 0%, #021b0d 55%, #000f06 100%); min-height: 100vh; }
-[data-theme="dark"][data-accent="red"] body    { background: linear-gradient(135deg, #140404 0%, #200606 55%, #100303 100%); min-height: 100vh; }
+[data-theme="dark"][data-accent="blue"] body   { background: linear-gradient(135deg, #030c1a 0%, #071629 55%, #020d22 100%); min-height: 100dvh; }
+[data-theme="dark"][data-accent="purple"] body { background: linear-gradient(135deg, #0a0514 0%, #180830 55%, #08051a 100%); min-height: 100dvh; }
+[data-theme="dark"][data-accent="green"] body  { background: linear-gradient(135deg, #011208 0%, #021b0d 55%, #000f06 100%); min-height: 100dvh; }
+[data-theme="dark"][data-accent="red"] body    { background: linear-gradient(135deg, #140404 0%, #200606 55%, #100303 100%); min-height: 100dvh; }
 
 /* Material You body */
 [data-theme="material"] body {
@@ -1542,7 +1542,7 @@ body.focus-mode .target-output { min-height: 340px; }
   position: sticky;
   top: 68px;
   align-self: start;
-  max-height: calc(100vh - 80px);
+  max-height: calc(100dvh - 80px);
 }
 .translator-wrap.dict-sidebar-open .dict-sidebar {
   display: flex;
@@ -2433,8 +2433,32 @@ body.history-open {
 }
 
 
+/* Retry button inside error message */
+.retry-btn {
+  display: inline-flex; align-items: center; gap: .25rem;
+  margin-left: .35rem;
+  padding: .15rem .55rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent);
+  font-family: inherit; font-size: .72rem; font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.retry-btn:hover { background: var(--accent); color: #fff; }
+
+/* Mobile copy button success state */
+.mobile-bar-btn.copy-success {
+  color: var(--accent) !important;
+}
+.mobile-bar-btn.copy-success svg {
+  stroke: var(--accent);
+}
+
 /* Dbl-click highlight on target output */
-.target-output ::selection { background: rgba(108,99,255,.25); }
+.target-output ::selection { background: var(--highlight-color, rgba(108,99,255,.25)); color: inherit; }
+#sourceText::selection      { background: var(--highlight-color, rgba(108,99,255,.25)); color: inherit; }
 
 /* ─── Conversation Mode ─── */
 .conv-overlay {

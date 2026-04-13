@@ -595,7 +595,15 @@ function hideLoading() {
     targetText.innerHTML = `<span class="placeholder-hint">${t.targetPlaceholder}</span>`;
   }
 }
-function showError(msg) { errorMsg.textContent = msg; }
+function showError(msg, withRetry = false) {
+  if (withRetry) {
+    errorMsg.innerHTML = `${escapeHtml(msg)}\u00a0<button class="retry-btn" id="retryTranslBtn">&#8635; R\u00e9essayer</button>`;
+    const retryBtn = document.getElementById("retryTranslBtn");
+    if (retryBtn) retryBtn.addEventListener("click", () => { clearError(); translate(); });
+  } else {
+    errorMsg.textContent = msg;
+  }
+}
 function clearError()   { errorMsg.textContent = ""; }
 
 function showBadge(api) {
@@ -719,7 +727,7 @@ async function translate() {
       updateFavBtn();
     } else {
       targetText.innerHTML = `<span class="placeholder-hint">${t.targetPlaceholder}</span>`;
-      showError(t.allApiFailed);
+      showError(t.allApiFailed, true);
       resetFavBtn();
     }
   } finally {
@@ -1983,11 +1991,14 @@ function initDictSidebar() {
     dictToggleBtn.title = isOpen ? "Fermer le dictionnaire" : "Ouvrir le dictionnaire";
     dictSidebar.setAttribute("aria-hidden", String(!isOpen));
 
-    // Move dict panel content into sidebar or back
-    const mainDictPanel  = document.getElementById("dictPanel");
-    const sidebarContent = document.getElementById("dictSidebarContent");
-    if (isOpen && mainDictPanel && sidebarContent) {
-      // Show sidebar; hide inline dict-hint
+    if (isOpen) {
+      // ── Fermer le panel inline pour éviter d'afficher 2 dicos ──
+      closeDictPanel();
+      // Transférer le contenu courant vers le sidebar si disponible
+      const sidebarBody  = document.getElementById("dictSidebarBody");
+      const sidebarBadge = document.getElementById("dictSidebarBadge");
+      if (sidebarBody && dictBody.innerHTML)  sidebarBody.innerHTML  = dictBody.innerHTML;
+      if (sidebarBadge && dictWordBadge.textContent) sidebarBadge.textContent = dictWordBadge.textContent;
       document.querySelector(".dict-hint-wrap")?.style.setProperty("display", "none");
     } else {
       document.querySelector(".dict-hint-wrap")?.style.removeProperty("display");
@@ -2092,6 +2103,9 @@ function buildCustomSelect(nativeSelect) {
   };
 
   const openDropdown = () => {
+    // Re-portail : on s'assure que le dropdown est le dernier enfant de body
+    // pour éviter tout problème de stacking context (backdrop-filter, transform…)
+    document.body.appendChild(dropdown);
     dropdown.hidden = false;
     btn.setAttribute("aria-expanded", "true");
     search.value = "";
@@ -2243,7 +2257,18 @@ const mobileCopyBtn  = document.getElementById("mobileCopyBtn");
 const mobileShareBtn = document.getElementById("mobileShareBtn");
 
 if (mobileSwapBtn) mobileSwapBtn.addEventListener("click", () => swapBtn.click());
-if (mobileCopyBtn) mobileCopyBtn.addEventListener("click", () => copyBtn.click());
+if (mobileCopyBtn) mobileCopyBtn.addEventListener("click", () => {
+  copyBtn.click();
+  // Feedback visuel sur le bouton mobile lui-même
+  const span = mobileCopyBtn.querySelector("span");
+  const origText = span?.textContent || "Copier";
+  if (span) span.textContent = "✓ Copié";
+  mobileCopyBtn.classList.add("copy-success");
+  setTimeout(() => {
+    if (span) span.textContent = origText;
+    mobileCopyBtn.classList.remove("copy-success");
+  }, 1800);
+});
 if (mobileShareBtn) mobileShareBtn.addEventListener("click", () => shareBtn.click());
 
 /* ----------------------------------------------------------
@@ -2268,6 +2293,39 @@ kbHelpOverlay.addEventListener("click", (e) => {
    Free Dictionary API: https://api.dictionaryapi.dev
    Triggered by double-clicking a word in targetText.
 ---------------------------------------------------------- */
+
+/* Traduction des catégories grammaticales (partOfSpeech) selon la langue UI */
+const POS_I18N = {
+  fr: {
+    "noun":         "nom",         "verb":          "verbe",
+    "adjective":    "adjectif",    "adverb":        "adverbe",
+    "pronoun":      "pronom",      "preposition":   "préposition",
+    "conjunction":  "conjonction", "interjection":  "interjection",
+    "article":      "article",     "determiner":    "déterminant",
+    "exclamation":  "exclamation", "abbreviation":  "abréviation",
+    "proper noun":  "nom propre",  "phrase":        "expression",
+    "idiom":        "idiotisme",   "numeral":       "numéral",
+    "particle":     "particule",   "prefix":        "préfixe",
+    "suffix":       "suffixe",     "contraction":   "contraction",
+  },
+  eu: {
+    "noun":         "izena",       "verb":          "aditza",
+    "adjective":    "adjektiboa",  "adverb":        "adberbioa",
+    "pronoun":      "izenordaina", "preposition":   "preposizioa",
+    "conjunction":  "konjuntzioa", "interjection":  "interjekzioa",
+    "article":      "artikulua",   "determiner":    "determinatzailea",
+    "exclamation":  "oihua",       "abbreviation":  "laburdura",
+    "proper noun":  "izen propioa","phrase":        "esapidea",
+  },
+  en: {}, // Déjà en anglais — pas de traduction nécessaire
+};
+
+/** Traduit un label partOfSpeech en fonction de la langue de l'interface */
+function translatePos(pos, uiLang) {
+  if (!pos) return pos;
+  const map = POS_I18N[uiLang] || POS_I18N.fr;
+  return map[pos.toLowerCase()] || pos;
+}
 const DICT_LANG_MAP = {
   en:"en", fr:"fr", es:"es", de:"de", it:"it", pt:"pt",
   ru:"ru", hi:"hi", ar:"ar", ja:"ja", ko:"ko", nl:"nl",
@@ -2442,7 +2500,8 @@ function syncSidebarDict() {
 
 function renderDictData(data, lang, append = false) {
   if (!data || !data.length) { showDictNotFound(""); return; }
-  const entry = data[0];
+  const entry  = data[0];
+  const uiLang = loadPrefs().lang || "fr";
   let html = "";
 
   // Phonetic
@@ -2453,7 +2512,7 @@ function renderDictData(data, lang, append = false) {
 
   (entry.meanings || []).slice(0, 4).forEach(meaning => {
     html += `<div class="dict-meaning">`;
-    html += `<span class="dict-pos">${escapeHtml(meaning.partOfSpeech || "")}</span>`;
+    html += `<span class="dict-pos">${escapeHtml(translatePos(meaning.partOfSpeech, uiLang) || "")}</span>`;
 
     (meaning.definitions || []).slice(0, 2).forEach(def => {
       html += `<p class="dict-def">${escapeHtml(def.definition || "")}</p>`;
@@ -2505,12 +2564,13 @@ function renderWiktionaryData(data, word) {
   // Wiktionary API returns { [lang]: [ { partOfSpeech, language, definitions: [{definition, parsedExamples, synonyms}] } ] }
   const allEntries = Object.values(data).flat();
   if (!allEntries.length) { showDictNotFound(word); return; }
+  const uiLang = loadPrefs().lang || "fr";
 
   let html = "";
   allEntries.slice(0, 4).forEach(entry => {
     if (!entry.definitions?.length) return;
     html += `<div class="dict-meaning">`;
-    html += `<span class="dict-pos">${escapeHtml(entry.partOfSpeech || "")}</span>`;
+    html += `<span class="dict-pos">${escapeHtml(translatePos(entry.partOfSpeech, uiLang) || "")}</span>`;
 
     entry.definitions.slice(0, 3).forEach(def => {
       // Strip HTML tags from definition
