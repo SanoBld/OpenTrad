@@ -103,6 +103,7 @@ let deferredInstall    = null;
 let connToastTimer     = null;
 let keepFormat         = false;
 let lastHighlightWord  = "";  // cross-highlight word sync
+let dictEnabled        = true; // Dictionnaire activé/désactivé
 
 const DEBOUNCE_MS    = 500;
 const SPELL_DEBOUNCE = 1000;
@@ -1842,6 +1843,10 @@ function init() {
 
   // Wire dict sidebar toggle button
   initDictSidebar();
+
+  // Restore dictEnabled from prefs
+  dictEnabled = loadPrefs().dictEnabled !== false; // true by default
+  applyDictEnabledState();
 }
 
 init();
@@ -1977,46 +1982,105 @@ function rebuildCustomSelect(nativeSelect) {
    of an inline panel in the target panel.
 ---------------------------------------------------------- */
 function initDictSidebar() {
-  const translatorWrap  = document.querySelector(".translator-wrap");
-  const dictSidebar     = document.getElementById("dictSidebar");
-  const dictToggleBtn   = document.getElementById("dictToggleBtn");
-  const dictSidebarClose= document.getElementById("dictSidebarClose");
+  const translatorWrap   = document.querySelector(".translator-wrap");
+  const dictSidebar      = document.getElementById("dictSidebar");
+  const dictToggleBtn    = document.getElementById("dictToggleBtn");
+  const dictSidebarClose = document.getElementById("dictSidebarClose");
 
   if (!dictToggleBtn || !dictSidebar || !translatorWrap) return;
 
-  dictToggleBtn.addEventListener("click", () => {
-    const isOpen = translatorWrap.classList.toggle("dict-sidebar-open");
-    dictToggleBtn.classList.toggle("active", isOpen);
-    dictToggleBtn.setAttribute("aria-pressed", String(isOpen));
-    dictToggleBtn.title = isOpen ? "Fermer le dictionnaire" : "Ouvrir le dictionnaire";
-    dictSidebar.setAttribute("aria-hidden", String(!isOpen));
+  function openSidebar() {
+    translatorWrap.classList.add("dict-sidebar-open");
+    dictToggleBtn.classList.add("active");
+    dictToggleBtn.setAttribute("aria-pressed", "true");
+    dictSidebar.setAttribute("aria-hidden", "false");
+    closeDictPanel();
+    const sidebarBody  = document.getElementById("dictSidebarBody");
+    const sidebarBadge = document.getElementById("dictSidebarBadge");
+    if (sidebarBody && dictBody.innerHTML)         sidebarBody.innerHTML  = dictBody.innerHTML;
+    if (sidebarBadge && dictWordBadge.textContent) sidebarBadge.textContent = dictWordBadge.textContent;
+    document.querySelector(".dict-hint-wrap")?.style.setProperty("display", "none");
+  }
 
-    if (isOpen) {
-      // ── Fermer le panel inline pour éviter d'afficher 2 dicos ──
-      closeDictPanel();
-      // Transférer le contenu courant vers le sidebar si disponible
-      const sidebarBody  = document.getElementById("dictSidebarBody");
-      const sidebarBadge = document.getElementById("dictSidebarBadge");
-      if (sidebarBody && dictBody.innerHTML)  sidebarBody.innerHTML  = dictBody.innerHTML;
-      if (sidebarBadge && dictWordBadge.textContent) sidebarBadge.textContent = dictWordBadge.textContent;
-      document.querySelector(".dict-hint-wrap")?.style.setProperty("display", "none");
-    } else {
-      document.querySelector(".dict-hint-wrap")?.style.removeProperty("display");
+  function closeSidebar() {
+    translatorWrap.classList.remove("dict-sidebar-open");
+    dictToggleBtn.classList.remove("active");
+    dictToggleBtn.setAttribute("aria-pressed", "false");
+    dictSidebar.setAttribute("aria-hidden", "true");
+    document.querySelector(".dict-hint-wrap")?.style.removeProperty("display");
+  }
+
+  dictToggleBtn.addEventListener("click", () => {
+    // Dict désactivé → réactive + ouvre
+    if (!dictEnabled) {
+      dictEnabled = true;
+      savePrefs({ dictEnabled });
+      applyDictEnabledState();
+      openSidebar();
+      return;
     }
+    // Dict activé → toggle sidebar
+    const isOpen = translatorWrap.classList.contains("dict-sidebar-open");
+    if (isOpen) closeSidebar(); else openSidebar();
+  });
+
+  // Clic droit = désactiver le dict (toggle)
+  dictToggleBtn.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    dictEnabled = !dictEnabled;
+    savePrefs({ dictEnabled });
+    applyDictEnabledState();
+    if (!dictEnabled) closeSidebar();
+    showDictToast(dictEnabled ? "Dictionnaire activé" : "Dictionnaire désactivé — clic droit à nouveau pour réactiver");
   });
 
   if (dictSidebarClose) {
-    dictSidebarClose.addEventListener("click", () => {
-      translatorWrap.classList.remove("dict-sidebar-open");
-      dictToggleBtn?.classList.remove("active");
-      dictToggleBtn?.setAttribute("aria-pressed", "false");
-      dictSidebar.setAttribute("aria-hidden", "true");
-      document.querySelector(".dict-hint-wrap")?.style.removeProperty("display");
-    });
+    dictSidebarClose.addEventListener("click", closeSidebar);
   }
 }
 
-/* Override dict panel open behavior to also sync sidebar */
+/* ----------------------------------------------------------
+   DICT ENABLE / DISABLE STATE
+---------------------------------------------------------- */
+function applyDictEnabledState() {
+  const dictToggleBtn = document.getElementById("dictToggleBtn");
+  const dictHintWrap  = document.querySelector(".dict-hint-wrap");
+
+  if (dictToggleBtn) {
+    dictToggleBtn.classList.toggle("dict-off", !dictEnabled);
+    dictToggleBtn.title = dictEnabled
+      ? "Ouvrir le dictionnaire (clic droit pour désactiver)"
+      : "Dictionnaire désactivé — clic pour réactiver";
+  }
+  if (dictHintWrap) dictHintWrap.style.display = dictEnabled ? "" : "none";
+
+  if (!dictEnabled) {
+    closeDictPanel();
+    const translWrap = document.querySelector(".translator-wrap");
+    if (translWrap?.classList.contains("dict-sidebar-open")) {
+      translWrap.classList.remove("dict-sidebar-open");
+      if (dictToggleBtn) {
+        dictToggleBtn.classList.remove("active");
+        dictToggleBtn.setAttribute("aria-pressed", "false");
+        document.getElementById("dictSidebar")?.setAttribute("aria-hidden", "true");
+      }
+    }
+  }
+}
+
+function showDictToast(msg) {
+  document.querySelectorAll(".dict-toast").forEach(t => t.remove());
+  const toast = document.createElement("div");
+  toast.className = "dict-toast";
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("show"));
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300);
+  }, 2600);
+}
+
 const _origDictOpen = window._dictPanelOpen;
 document.addEventListener("_dictLoaded", () => {
   const dictSidebar   = document.getElementById("dictSidebar");
@@ -2485,6 +2549,21 @@ function showDictNotFound(word) {
   syncSidebarDict();
 }
 
+/** Click handler for synonym tags:
+ *  - If source has ≤ 1 word: replaces it and retranslates
+ *  - Otherwise: just looks up the synonym in the dictionary */
+function synTagClick(word) {
+  const srcWords = sourceText.value.trim().split(/\s+/).filter(Boolean);
+  if (srcWords.length <= 1 && sourceText.value.trim()) {
+    // Replace source word and retranslate
+    sourceText.value = word;
+    sourceText.dispatchEvent(new Event("input", { bubbles: true }));
+    translate();
+  } else {
+    fetchDictionary(word, targetLang.value);
+  }
+}
+
 /** Mirror dictBody content into the sidebar when sidebar mode is active */
 function syncSidebarDict() {
   const translWrap   = document.querySelector(".translator-wrap");
@@ -2493,7 +2572,7 @@ function syncSidebarDict() {
     sidebarBody.innerHTML = dictBody.innerHTML;
     // Re-wire synonym clicks in sidebar copy
     sidebarBody.querySelectorAll(".dict-syn-tag").forEach(btn => {
-      btn.addEventListener("click", () => fetchDictionary(btn.dataset.word, targetLang.value));
+      btn.addEventListener("click", () => synTagClick(btn.dataset.word));
     });
   }
 }
@@ -2548,11 +2627,9 @@ function renderDictData(data, lang, append = false) {
     dictBody.innerHTML = html;
   }
 
-  // Click on synonym tag — look it up
+  // Click on synonym tag
   dictBody.querySelectorAll(".dict-syn-tag").forEach(btn => {
-    btn.addEventListener("click", () => {
-      fetchDictionary(btn.dataset.word, targetLang.value);
-    });
+    btn.addEventListener("click", () => synTagClick(btn.dataset.word));
   });
 
   // Mirror to sidebar if open
@@ -2602,7 +2679,7 @@ function renderWiktionaryData(data, word) {
   dictBody.innerHTML = html;
 
   dictBody.querySelectorAll(".dict-syn-tag").forEach(btn => {
-    btn.addEventListener("click", () => fetchDictionary(btn.dataset.word, targetLang.value));
+    btn.addEventListener("click", () => synTagClick(btn.dataset.word));
   });
 
   syncSidebarDict();
@@ -2699,16 +2776,27 @@ document.addEventListener("selectionchange", () => {
 
   if (inTarget) {
     highlightWordInSource(sel);
-    fetchDictionary(sel, targetLang.value);
+    if (dictEnabled) {
+      const srcWordCount = sourceText.value.trim().split(/\s+/).filter(Boolean).length;
+      if (srcWordCount < 3) fetchDictionary(sel, targetLang.value);
+    }
   } else if (inSource) {
     highlightWordInTarget(sel);
-    const lang = sourceLang.value === "auto" ? "en" : sourceLang.value;
-    fetchDictionary(sel, lang);
+    if (dictEnabled) {
+      const srcWordCount = sourceText.value.trim().split(/\s+/).filter(Boolean).length;
+      if (srcWordCount < 3) {
+        const lang = sourceLang.value === "auto" ? "en" : sourceLang.value;
+        fetchDictionary(sel, lang);
+      }
+    }
   }
 });
 
 // Trigger on double-click in target output
 targetText.addEventListener("dblclick", () => {
+  if (!dictEnabled) return;
+  const srcWordCount = sourceText.value.trim().split(/\s+/).filter(Boolean).length;
+  if (srcWordCount >= 3) return;
   const sel = window.getSelection()?.toString().trim();
   if (sel && sel.length >= 2 && sel.length <= 60 && !sel.includes(" ")) {
     highlightWordInSource(sel);
@@ -2718,6 +2806,9 @@ targetText.addEventListener("dblclick", () => {
 
 // Trigger on double-click in source textarea
 sourceText.addEventListener("dblclick", () => {
+  if (!dictEnabled) return;
+  const srcWordCount = sourceText.value.trim().split(/\s+/).filter(Boolean).length;
+  if (srcWordCount >= 3) return;
   const sel = window.getSelection()?.toString().trim()
            || sourceText.value.slice(sourceText.selectionStart, sourceText.selectionEnd).trim();
   if (sel && sel.length >= 2 && sel.length <= 60 && !sel.includes(" ")) {
