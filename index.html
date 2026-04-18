@@ -157,26 +157,19 @@
           <option value="id">🇮🇩 Indonésien</option>
         </select>
         <div class="panel-actions">
-          <!-- Font size toggle -->
-          <button id="fontSizeBtn" class="icon-btn icon-btn--small" title="Agrandir le texte" aria-label="Changer la taille du texte" data-size="normal">
-            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-              <path d="M3 18h5.5l1-2.5h3l1 2.5H19v-1.5l-4.5-11H9.5L5 16.5H3V18zm7.5-5l1-3 1 3h-2z" opacity=".5"/>
-              <path d="M14 20h8v-1.5l-2-5h-4l-2 5V20zm3-4.5.8 2.5h-1.6l.8-2.5z"/>
-            </svg>
-          </button>
-          <!-- Text formatting: Bold -->
+          <!-- Group 1: formatting -->
           <button id="boldBtn" class="icon-btn icon-btn--small fmt-btn" title="Gras (Ctrl+B)" aria-label="Mettre en gras" aria-pressed="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
               <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
             </svg>
           </button>
-          <!-- Text formatting: Underline -->
           <button id="underlineBtn" class="icon-btn icon-btn--small fmt-btn" title="Souligner (Ctrl+U)" aria-label="Souligner" aria-pressed="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/>
             </svg>
           </button>
-          <!-- Spell check -->
+          <span class="btn-divider" aria-hidden="true"></span>
+          <!-- Group 2: tools -->
           <button id="spellBtn" class="icon-btn icon-btn--small active" title="Correction orthographique" aria-label="Activer/désactiver la correction">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <polyline points="4 7 4 4 20 4 20 7"/>
@@ -184,22 +177,35 @@
               <line x1="12" y1="4" x2="12" y2="20"/>
             </svg>
           </button>
-          <!-- Upload -->
           <button id="uploadBtn" class="icon-btn icon-btn--small" title="Charger un fichier (.txt, PDF, image)" aria-label="Charger un fichier">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
           </button>
-          <!-- OCR progress indicator -->
           <span id="ocrStatus" class="ocr-status" aria-live="polite"></span>
           <input type="file" id="fileInput" accept=".txt,.pdf,image/jpeg,image/png,image/webp" hidden />
-          <!-- TTS Source -->
+          <span class="btn-divider" aria-hidden="true"></span>
+          <!-- Group 3: audio / font -->
+          <button id="sttBtn" class="icon-btn icon-btn--small stt-btn" title="Dicter (reconnaissance vocale)" aria-label="Dicter un texte">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </button>
           <button id="ttsSource" class="icon-btn icon-btn--small tts-btn" title="Lire à voix haute" aria-label="Lire le texte source">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
               <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
               <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+          </button>
+          <button id="fontSizeBtn" class="icon-btn icon-btn--small" title="Changer la taille du texte" aria-label="Changer la taille du texte" data-size="normal">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <path d="M3 18h5.5l1-2.5h3l1 2.5H19v-1.5l-4.5-11H9.5L5 16.5H3V18zm7.5-5l1-3 1 3h-2z" opacity=".5"/>
+              <path d="M14 20h8v-1.5l-2-5h-4l-2 5V20zm3-4.5.8 2.5h-1.6l.8-2.5z"/>
             </svg>
           </button>
         </div>

@@ -703,20 +703,31 @@ async function translateMyMemory(text, from, to) {
 }
 
 async function translateLibre(text, from, to) {
-  const res = await fetch("https://libretranslate.de/translate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ q: text, source: from === "auto" ? "auto" : from, target: to, format: "text" }),
-  });
-  if (res.status === 429 || res.status >= 500) {
-    setApiCooldown("libre");
-    throw new Error(`LibreTranslate HTTP ${res.status}`);
+  // Multiple public mirrors — tried in order until one responds
+  const LIBRE_MIRRORS = [
+    "https://translate.argosopentech.com/translate",
+    "https://libretranslate.pussthecat.org/translate",
+    "https://translate.terraprint.co/translate",
+  ];
+  const body = JSON.stringify({ q: text, source: from === "auto" ? "auto" : from, target: to, format: "text" });
+  for (const url of LIBRE_MIRRORS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.translatedText) {
+        clearApiCooldown("libre");
+        return data.translatedText;
+      }
+    } catch { /* try next mirror */ }
   }
-  if (!res.ok) throw new Error(`LibreTranslate HTTP ${res.status}`);
-  const data = await res.json();
-  if (!data.translatedText) throw new Error("LibreTranslate: empty");
-  clearApiCooldown("libre");
-  return data.translatedText;
+  setApiCooldown("libre");
+  throw new Error("LibreTranslate: all mirrors failed");
 }
 
 async function translate() {
@@ -958,6 +969,72 @@ function speak(text, langCode, btn) {
 
 ttsSource.addEventListener("click", () => speak(sourceText.value, sourceLang.value, ttsSource));
 ttsTarget.addEventListener("click", () => speak(targetText.textContent, targetLang.value, ttsTarget));
+
+/* ----------------------------------------------------------
+   DICTÉE VOCALE (STT) — source panel mic for desktop
+   Uses Web Speech API SpeechRecognition to write into sourceText
+---------------------------------------------------------- */
+const sttBtn = document.getElementById("sttBtn");
+let sttRecognition = null;
+let sttActive = false;
+
+if (sttBtn) {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) {
+    sttBtn.style.display = "none"; // hide if not supported
+  } else {
+    sttBtn.addEventListener("click", () => {
+      if (sttActive) {
+        sttRecognition?.stop();
+        return;
+      }
+      sttRecognition = new SpeechRec();
+      sttRecognition.lang = sourceLang.value === "auto" ? "fr-FR"
+        : (sourceLang.value + "-" + sourceLang.value.toUpperCase());
+      sttRecognition.interimResults = true;
+      sttRecognition.continuous = false;
+      sttActive = true;
+      sttBtn.classList.add("stt-active");
+      sttBtn.title = "Dictée en cours… (cliquer pour arrêter)";
+      haptic(20);
+
+      const savedText = sourceText.value;
+      let interimResult = "";
+
+      sttRecognition.onresult = (e) => {
+        interimResult = "";
+        let final = savedText;
+        for (const res of e.results) {
+          if (res.isFinal) {
+            final += (final && !final.endsWith(" ") ? " " : "") + res[0].transcript;
+          } else {
+            interimResult = res[0].transcript;
+          }
+        }
+        sourceText.value = final + (interimResult ? " " + interimResult : "");
+        updateCharCount();
+      };
+
+      sttRecognition.onend = () => {
+        sttActive = false;
+        sttBtn.classList.remove("stt-active");
+        sttBtn.title = "Dicter (reconnaissance vocale)";
+        // Trigger translation with final text
+        clearTimeout(debounceTimer);
+        translate();
+      };
+
+      sttRecognition.onerror = (e) => {
+        sttActive = false;
+        sttBtn.classList.remove("stt-active");
+        sttBtn.title = "Dicter (reconnaissance vocale)";
+        if (e.error !== "aborted") showError("Dictée : " + e.error);
+      };
+
+      sttRecognition.start();
+    });
+  }
+}
 
 /* ----------------------------------------------------------
    17. KEYBOARD SHORTCUTS  (power-user shortcuts)
@@ -2093,9 +2170,6 @@ syncTimeSlotsUI();
 applyTimeBasedTheme();
 setInterval(applyTimeBasedTheme, 5 * 60 * 1000);
 
-/* ── Guard clearHistory from removing pinned items ── */
-const _origClearHistory = clearHistoryBtn?.onclick;
-clearHistoryBtn?.addEventListener("click", () => {}, false); // overridden below
 
 function init() {
   const prefs = loadPrefs();
@@ -2303,9 +2377,13 @@ function updateConvBar() {
   if (convLangSelectBottom && convLangSelectBottom.value !== convLangBottom) convLangSelectBottom.value = convLangBottom;
 }
 
-convModeBtn.addEventListener("click", openConvMode);
-convCloseBtn.addEventListener("click", closeConvMode);
+// Conv mode listeners — with null safety
+if (convModeBtn)    convModeBtn.addEventListener("click", openConvMode);
+if (convCloseBtn)   convCloseBtn.addEventListener("click", closeConvMode);
 if (convCloseMobile) convCloseMobile.addEventListener("click", closeConvMode);
+// Backup onclick for extra reliability
+if (convModeBtn)  convModeBtn.onclick  = openConvMode;
+if (convCloseBtn) convCloseBtn.onclick = closeConvMode;
 
 // TTS in conversation mode
 if (convTtsTop) {
