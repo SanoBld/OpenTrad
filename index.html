@@ -317,6 +317,18 @@
       </div>
 
 
+      <!-- ── Inline API compare (shown inside the target panel) ── -->
+      <div id="apiComparePanel" class="api-compare-inline" aria-hidden="true">
+        <div class="api-compare-header">
+          <span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="12" height="12" style="vertical-align:middle;margin-right:.3rem"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+            Comparaison des sources
+          </span>
+          <button id="apiComparePanelClose" class="api-compare-close" aria-label="Fermer">✕</button>
+        </div>
+        <div id="apiCompareBody" class="api-compare-body"></div>
+      </div>
+
       <div class="panel-footer panel-footer--right">
         <div id="apiBadgeWrap">
           <span id="apiBadge" class="api-badge"></span>
@@ -330,6 +342,7 @@
       </div>
     </section>
   </main>
+
 
 
   <!-- ══════════════════════════════════════════
@@ -348,7 +361,8 @@
         <span id="historyTitle" data-i18n="historyTitle">10 dernières traductions</span>
       </h2>
       <div class="history-header-actions">
-        <button id="exportHistoryBtn" class="btn-text" aria-label="Exporter l'historique" title="Exporter en JSON">⬇ Export</button>
+        <button id="exportHistoryBtn" class="btn-text" aria-label="Exporter l'historique en JSON" title="Exporter en JSON">⬇ JSON</button>
+        <button id="exportCsvBtn" class="btn-text" aria-label="Exporter l'historique en CSV" title="Exporter en CSV">⬇ CSV</button>
         <button id="clearHistoryBtn" class="btn-text" aria-label="Effacer l'historique" data-i18n="clearHistory">Tout effacer</button>
         <button id="closeHistoryBtn" class="icon-btn" aria-label="Fermer l'historique">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -478,6 +492,100 @@
             </button>
           </div>
           <p class="setting-hint" data-i18n="settingsApiHint">En mode Auto, l'application essaie chaque service l'un après l'autre si le précédent échoue.</p>
+        </div>
+
+        <!-- Comparaison des APIs -->
+        <div class="setting-group">
+          <label class="setting-label">Comparaison des APIs</label>
+          <div class="setting-options" id="compareApiOptions">
+            <button class="opt-btn active" data-compare="off">Désactivé</button>
+            <button class="opt-btn" data-compare="on">Actif</button>
+          </div>
+          <p class="setting-hint">Affiche les résultats des 3 sources côte à côte après chaque traduction pour choisir le meilleur.</p>
+        </div>
+
+        <!-- Thème selon l'heure -->
+        <div class="setting-group">
+          <label class="setting-label">Thème automatique selon l'heure</label>
+          <div class="setting-options" id="autoTimeThemeOptions">
+            <button class="opt-btn active" data-timetheme="off">Désactivé</button>
+            <button class="opt-btn" data-timetheme="on">Actif</button>
+          </div>
+
+          <!-- Slot configurator — visible only when enabled -->
+          <div class="time-slots-config" id="timeSlotsConfig">
+            <div class="time-slot-row">
+              <label class="time-slot-label">
+                <span class="time-slot-icon">🌅</span>
+                Matin
+                <span class="time-slot-range">
+                  <input type="number" id="slotMorningStart" min="0" max="23" value="6" class="time-input"> h
+                  →
+                  <input type="number" id="slotMorningEnd" min="0" max="23" value="12" class="time-input"> h
+                </span>
+              </label>
+              <select id="slotMorningTheme" class="time-slot-select">
+                <option value="light">Glassmorphism</option>
+                <option value="neuro">Neumorphism</option>
+                <option value="aurora">Midnight Aurora</option>
+                <option value="bento">Bento</option>
+                <option value="paper">Paper White</option>
+                <option value="classic">Classic</option>
+                <option value="material">Material</option>
+              </select>
+            </div>
+            <div class="time-slot-row">
+              <label class="time-slot-label">
+                <span class="time-slot-icon">☀️</span>
+                Après-midi
+                <span class="time-slot-range">
+                  <input type="number" id="slotAfternoonStart" min="0" max="23" value="12" class="time-input"> h
+                  →
+                  <input type="number" id="slotAfternoonEnd" min="0" max="23" value="20" class="time-input"> h
+                </span>
+              </label>
+              <select id="slotAfternoonTheme" class="time-slot-select">
+                <option value="light">Glassmorphism</option>
+                <option value="neuro">Neumorphism</option>
+                <option value="aurora">Midnight Aurora</option>
+                <option value="bento">Bento</option>
+                <option value="paper" selected>Paper White</option>
+                <option value="classic">Classic</option>
+                <option value="material">Material</option>
+              </select>
+            </div>
+            <div class="time-slot-row">
+              <label class="time-slot-label">
+                <span class="time-slot-icon">🌙</span>
+                Nuit
+                <span class="time-slot-range">
+                  <input type="number" id="slotNightStart" min="0" max="23" value="20" class="time-input"> h
+                  →
+                  <input type="number" id="slotNightEnd" min="0" max="23" value="6" class="time-input"> h
+                </span>
+              </label>
+              <select id="slotNightTheme" class="time-slot-select">
+                <option value="light">Glassmorphism</option>
+                <option value="neuro">Neumorphism</option>
+                <option value="aurora" selected>Midnight Aurora</option>
+                <option value="bento">Bento</option>
+                <option value="paper">Paper White</option>
+                <option value="classic">Classic</option>
+                <option value="material">Material</option>
+              </select>
+            </div>
+            <button id="timeSlotsApply" class="btn-text" style="margin-top:.5rem;align-self:flex-end">Enregistrer</button>
+          </div>
+        </div>
+
+        <!-- Retour haptique -->
+        <div class="setting-group">
+          <label class="setting-label">Retour haptique (mobile)</label>
+          <div class="setting-options" id="hapticOptions">
+            <button class="opt-btn active" data-haptic="on">Activé</button>
+            <button class="opt-btn" data-haptic="off">Désactivé</button>
+          </div>
+          <p class="setting-hint">Légère vibration lors de la copie, du swap et du mode conversation.</p>
         </div>
       </div>
     </div>

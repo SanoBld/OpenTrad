@@ -416,6 +416,24 @@ function syncSettingsUI() {
   apiOptions.querySelectorAll(".opt-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.api === api);
   });
+
+  // Compare API
+  const compareApi = prefs.compareApi || "off";
+  document.querySelectorAll("#compareApiOptions .opt-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.compare === compareApi);
+  });
+
+  // Haptic
+  const hapticPref = prefs.haptic !== "off" ? "on" : "off";
+  document.querySelectorAll("#hapticOptions .opt-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.haptic === hapticPref);
+  });
+
+  // Auto time theme
+  const timeTheme = prefs.autoTimeTheme || "off";
+  document.querySelectorAll("#autoTimeThemeOptions .opt-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.timetheme === timeTheme);
+  });
 }
 
 /** Language picker */
@@ -465,6 +483,31 @@ apiOptions.addEventListener("click", (e) => {
   if (!btn) return;
   savePrefs({ api: btn.dataset.api });
   syncSettingsUI();
+});
+
+/** Compare API picker */
+document.getElementById("compareApiOptions")?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".opt-btn[data-compare]");
+  if (!btn) return;
+  savePrefs({ compareApi: btn.dataset.compare });
+  syncSettingsUI();
+});
+
+/** Haptic picker */
+document.getElementById("hapticOptions")?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".opt-btn[data-haptic]");
+  if (!btn) return;
+  savePrefs({ haptic: btn.dataset.haptic });
+  syncSettingsUI();
+});
+
+/** Auto time theme picker */
+document.getElementById("autoTimeThemeOptions")?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".opt-btn[data-timetheme]");
+  if (!btn) return;
+  savePrefs({ autoTimeTheme: btn.dataset.timetheme });
+  syncSettingsUI();
+  if (btn.dataset.timetheme === "on") applyTimeBasedTheme();
 });
 
 /* ----------------------------------------------------------
@@ -605,11 +648,13 @@ function showError(msg, withRetry = false) {
 }
 function clearError()   { errorMsg.textContent = ""; }
 
+const API_CONFIDENCE = { google: "★★★", mymemory: "★★☆", libre: "★☆☆" };
 function showBadge(api) {
   const labels  = { google: "✦ Google", mymemory: "✦ MyMemory", libre: "✦ LibreTranslate" };
   const classes = { google: "badge-google", mymemory: "badge-mymemory", libre: "badge-libre" };
   apiBadge.className = "api-badge";
-  apiBadge.textContent = labels[api] || api;
+  const stars = API_CONFIDENCE[api] || "";
+  apiBadge.innerHTML = `${labels[api] || api} <span class="api-confidence" title="Qualité estimée de la source">${stars}</span>`;
   apiBadge.classList.add(classes[api] || "", "visible");
 }
 function hideBadge() { apiBadge.classList.remove("visible"); }
@@ -716,11 +761,21 @@ async function translate() {
       catch { /* fallthrough */ }
     }
 
+    // Chunked translation for large texts
+    if (!result && text.length > 1500) {
+      const chunked = await translateChunked(text, from, to, prefs);
+      if (chunked.result) { result = chunked.result; apiUsed = chunked.apiUsed; }
+    }
+
     if (result) {
       targetText.textContent = result;
       showBadge(apiUsed);
       saveToHistory(text, result, from, to);
       updateFavBtn();
+      // API comparison mode
+      if (prefs.compareApi === "on") {
+        showApiComparison(text, from, to, result, apiUsed);
+      }
     } else {
       targetText.innerHTML = `<span class="placeholder-hint">${t.targetPlaceholder}</span>`;
       showError(t.allApiFailed, true);
@@ -781,7 +836,7 @@ swapBtn.addEventListener("click", () => {
   swapBtn.addEventListener("animationend", () => swapBtn.classList.remove("rotating"), { once: true });
 
   // Haptic feedback
-  navigator.vibrate?.(30);
+  haptic(30);
 
   clearTimeout(debounceTimer);
   translate();
@@ -836,7 +891,7 @@ copyBtn.addEventListener("click", async () => {
   copyTooltip.classList.add("visible");
 
   // Haptic feedback
-  navigator.vibrate?.(15);
+  haptic(15);
 
   setTimeout(() => {
     copyTooltip.classList.remove("visible");
@@ -1093,9 +1148,17 @@ function saveToHistory(source, target, fromLang, toLang) {
     fromLang, toLang,
     date: new Date().toISOString(),
     starred: false,
+    pinned: false,
   };
   history.unshift(entry);
-  if (history.length > HISTORY_MAX) history.length = HISTORY_MAX;
+  // Preserve pinned — only count non-pinned towards the limit
+  const nonPinned = history.filter(h => !h.pinned);
+  if (nonPinned.length > HISTORY_MAX) {
+    let removed = 0;
+    for (let i = history.length - 1; i >= 0 && removed < nonPinned.length - HISTORY_MAX; i--) {
+      if (!history[i].pinned) { history.splice(i, 1); removed++; }
+    }
+  }
   saveHistory(history);
 }
 
@@ -1103,6 +1166,12 @@ function toggleStar(id) {
   const history = loadHistory();
   const item = history.find(h => h.id === id);
   if (item) { item.starred = !item.starred; saveHistory(history); renderHistory(); }
+}
+
+function togglePin(id) {
+  const history = loadHistory();
+  const item = history.find(h => h.id === id);
+  if (item) { item.pinned = !item.pinned; saveHistory(history); renderHistory(); }
 }
 
 /* ── Fav button (target panel footer) ── */
@@ -1188,10 +1257,12 @@ function renderHistory() {
     li.setAttribute("tabindex", "0");
     li.setAttribute("aria-label", `Recharger : ${item.source}`);
 
+    if (item.pinned) li.classList.add("pinned");
     li.innerHTML = `
       <div class="history-item-top">
         <div style="min-width:0;flex:1">
           <div class="history-langs">
+            ${item.pinned ? '<span class="pin-badge" title="Épinglé">📌</span>' : ""}
             <span>${langName(item.fromLang)}</span>
             <span class="arrow">→</span>
             <span>${langName(item.toLang)}</span>
@@ -1200,13 +1271,24 @@ function renderHistory() {
           <div class="history-target">${escapeHtml(item.target)}</div>
           <div class="history-time">${timeAgo(item.date)}</div>
         </div>
-        <button class="star-btn ${item.starred ? "starred" : ""}" data-id="${item.id}"
-          title="${item.starred ? "Retirer des favoris" : "Ajouter aux favoris"}" aria-label="Favori">
-          ${item.starred ? "★" : "☆"}
-        </button>
+        <div class="history-item-actions">
+          <button class="pin-btn ${item.pinned ? "pinned" : ""}" data-id="${item.id}"
+            title="${item.pinned ? "Désépingler" : "Épingler (ne sera pas supprimé)"}" aria-label="Épingler">
+            📌
+          </button>
+          <button class="star-btn ${item.starred ? "starred" : ""}" data-id="${item.id}"
+            title="${item.starred ? "Retirer des favoris" : "Ajouter aux favoris"}" aria-label="Favori">
+            ${item.starred ? "★" : "☆"}
+          </button>
+        </div>
       </div>
     `;
 
+    const pinButton  = li.querySelector(".pin-btn");
+    if (pinButton) pinButton.addEventListener("click", (e) => {
+      e.stopPropagation();
+      togglePin(item.id);
+    });
     const starButton = li.querySelector(".star-btn");
     starButton.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1252,7 +1334,9 @@ closeHistoryBtn.addEventListener("click", closeHistory);
 historyBackdrop.addEventListener("click", closeHistory);
 
 clearHistoryBtn.addEventListener("click", () => {
-  localStorage.removeItem(HISTORY_KEY);
+  const history = loadHistory();
+  const pinned = history.filter(h => h.pinned);
+  saveHistory(pinned); // keep pinned, remove rest
   renderHistory();
 });
 
@@ -1707,6 +1791,11 @@ shareBtn.addEventListener("click", async () => {
 /* ----------------------------------------------------------
    20c. EXPORT HISTORY
 ---------------------------------------------------------- */
+/** Haptic feedback — respects user pref */
+function haptic(ms = 30) {
+  if (loadPrefs().haptic !== "off") navigator.vibrate?.(ms);
+}
+
 exportHistoryBtn.addEventListener("click", () => {
   const history = loadHistory();
   if (history.length === 0) return;
@@ -1718,6 +1807,26 @@ exportHistoryBtn.addEventListener("click", () => {
   a.download    = `opentrad-history-${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+// CSV export
+document.getElementById("exportCsvBtn")?.addEventListener("click", () => {
+  const history = loadHistory();
+  if (history.length === 0) return;
+  const header = ["id","date","fromLang","toLang","source","target","starred","pinned"];
+  const rows   = history.map(h => header.map(k => {
+    const v = String(h[k] ?? "");
+    return `"${v.replace(/"/g,'\'\'')}"`;
+  }).join(","));
+  const csv  = [header.join(","), ...rows].join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = `opentrad-history-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 });
@@ -1810,6 +1919,184 @@ window.addEventListener("appinstalled", () => {
 /* ----------------------------------------------------------
    22. INITIALISATION
 ---------------------------------------------------------- */
+
+/* ----------------------------------------------------------
+   NEW FEATURES BLOCK
+   - Chunked translation (large texts)
+   - API comparison panel
+   - Auto time-based theme
+   - Pinned history clear guard
+---------------------------------------------------------- */
+
+/* ── Chunked translation ── */
+async function translateChunked(text, from, to, prefs) {
+  const CHUNK = 1000;
+  const chunks = [];
+  for (let i = 0; i < text.length; i += CHUNK) {
+    chunks.push(text.slice(i, i + CHUNK));
+  }
+  const parts = [];
+  let apiUsed  = null;
+  const selectedApi = prefs.api || "auto";
+
+  for (const chunk of chunks) {
+    let r = null;
+    if ((selectedApi === "auto" || selectedApi === "google") && !isApiOnCooldown("google")) {
+      try { r = await translateGoogle(chunk, from, to); apiUsed = "google"; } catch {}
+    }
+    if (!r && (selectedApi === "auto" || selectedApi === "mymemory") && !isApiOnCooldown("mymemory")) {
+      try { r = await translateMyMemory(chunk, from, to); apiUsed = "mymemory"; } catch {}
+    }
+    if (!r && (selectedApi === "auto" || selectedApi === "libre") && !isApiOnCooldown("libre")) {
+      try { r = await translateLibre(chunk, from, to); apiUsed = "libre"; } catch {}
+    }
+    if (!r) return { result: null, apiUsed: null }; // chunk failed — abort
+    parts.push(r);
+  }
+  return { result: parts.join(" "), apiUsed };
+}
+
+/* ── API Comparison Panel ── */
+const apiComparePanel    = document.getElementById("apiComparePanel");
+const apiCompareBody     = document.getElementById("apiCompareBody");
+const apiComparePanelClose = document.getElementById("apiComparePanelClose");
+
+if (apiComparePanelClose) apiComparePanelClose.addEventListener("click", closeApiCompare);
+
+function closeApiCompare() {
+  apiComparePanel?.classList.remove("open");
+  apiComparePanel?.setAttribute("aria-hidden", "true");
+}
+
+async function showApiComparison(text, from, to, primaryResult, primaryApi) {
+  if (!apiComparePanel || !apiCompareBody) return;
+  const apis = [
+    { key: "google",   fn: translateGoogle,   label: "✦ Google",         stars: "★★★" },
+    { key: "mymemory", fn: translateMyMemory,  label: "✦ MyMemory",       stars: "★★☆" },
+    { key: "libre",    fn: translateLibre,     label: "✦ LibreTranslate", stars: "★☆☆" },
+  ];
+
+  apiCompareBody.innerHTML = '<p class="compare-loading">Interrogation des sources…</p>';
+  apiComparePanel.classList.add("open");
+  apiComparePanel.setAttribute("aria-hidden", "false");
+  // Scroll inline panel into view
+  setTimeout(() => apiComparePanel.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
+
+  const results = await Promise.allSettled(
+    apis.map(a => a.fn(text, from, to).then(r => ({ key: a.key, label: a.label, stars: a.stars, result: r })))
+  );
+
+  apiCompareBody.innerHTML = "";
+  results.forEach((r, i) => {
+    const api  = apis[i];
+    const ok   = r.status === "fulfilled";
+    const txt  = ok ? r.value.result : null;
+    const isPrimary = api.key === primaryApi;
+    const div  = document.createElement("div");
+    div.className = "compare-row" + (isPrimary ? " compare-primary" : "") + (ok ? "" : " compare-error");
+    div.innerHTML = `
+      <div class="compare-row-header">
+        <span class="compare-label">${api.label}</span>
+        <span class="compare-stars" title="Qualité estimée">${api.stars}</span>
+        ${isPrimary ? '<span class="compare-used-badge">Utilisé</span>' : ""}
+        <button class="compare-use-btn" ${ok ? "" : "disabled"}>Utiliser</button>
+      </div>
+      <div class="compare-text">${ok ? escapeHtml(txt) : '<em>Service indisponible</em>'}</div>
+    `;
+    if (ok) {
+      div.querySelector(".compare-use-btn").addEventListener("click", () => {
+        targetText.textContent = txt;
+        closeApiCompare();
+      });
+    }
+    apiCompareBody.appendChild(div);
+  });
+}
+
+/* ── Auto time-based theme (slot-configurable) ── */
+
+const DEFAULT_SLOTS = [
+  { id: "morning",   start: 6,  end: 12, theme: "light"  },
+  { id: "afternoon", start: 12, end: 20, theme: "paper"  },
+  { id: "night",     start: 20, end: 6,  theme: "aurora" },
+];
+
+function loadTimeSlots() {
+  try { return JSON.parse(localStorage.getItem("opentrad-timeslots")) || DEFAULT_SLOTS; }
+  catch { return DEFAULT_SLOTS; }
+}
+
+function saveTimeSlots(slots) {
+  try { localStorage.setItem("opentrad-timeslots", JSON.stringify(slots)); } catch {}
+}
+
+function applyTimeBasedTheme() {
+  const prefs = loadPrefs();
+  if (prefs.autoTimeTheme !== "on") return;
+  const h = new Date().getHours();
+  const slots = loadTimeSlots();
+  let targetTheme = null;
+  for (const slot of slots) {
+    const inSlot = slot.start <= slot.end
+      ? h >= slot.start && h < slot.end
+      : h >= slot.start || h < slot.end; // overnight
+    if (inSlot) { targetTheme = slot.theme; break; }
+  }
+  if (!targetTheme) return;
+  const darkMode = targetTheme === "aurora" ? "dark" : (prefs.darkMode || "light");
+  if (prefs.themeStyle !== targetTheme) {
+    savePrefs({ themeStyle: targetTheme, darkMode });
+    applyTheme(targetTheme, darkMode);
+    syncSettingsUI();
+  }
+}
+
+function syncTimeSlotsUI() {
+  const slots  = loadTimeSlots();
+  const on     = loadPrefs().autoTimeTheme === "on";
+  const config = document.getElementById("timeSlotsConfig");
+  if (config) config.classList.toggle("visible", on);
+  slots.forEach(slot => {
+    const cap     = slot.id.charAt(0).toUpperCase() + slot.id.slice(1);
+    const startEl = document.getElementById(`slot${cap}Start`);
+    const endEl   = document.getElementById(`slot${cap}End`);
+    const themeEl = document.getElementById(`slot${cap}Theme`);
+    if (startEl) startEl.value = slot.start;
+    if (endEl)   endEl.value   = slot.end;
+    if (themeEl) themeEl.value = slot.theme;
+  });
+}
+
+document.getElementById("timeSlotsApply")?.addEventListener("click", () => {
+  const slots = loadTimeSlots();
+  slots.forEach(slot => {
+    const cap     = slot.id.charAt(0).toUpperCase() + slot.id.slice(1);
+    const startEl = document.getElementById(`slot${cap}Start`);
+    const endEl   = document.getElementById(`slot${cap}End`);
+    const themeEl = document.getElementById(`slot${cap}Theme`);
+    if (startEl) slot.start = parseInt(startEl.value, 10);
+    if (endEl)   slot.end   = parseInt(endEl.value,   10);
+    if (themeEl) slot.theme = themeEl.value;
+  });
+  saveTimeSlots(slots);
+  applyTimeBasedTheme();
+  const btn = document.getElementById("timeSlotsApply");
+  if (btn) { const orig = btn.textContent; btn.textContent = "✓ Enregistré !"; setTimeout(() => btn.textContent = orig, 1800); }
+});
+
+// Show/hide slot config when toggling on/off
+document.getElementById("autoTimeThemeOptions")?.addEventListener("click", () => {
+  setTimeout(syncTimeSlotsUI, 60);
+}, true);
+
+syncTimeSlotsUI();
+applyTimeBasedTheme();
+setInterval(applyTimeBasedTheme, 5 * 60 * 1000);
+
+/* ── Guard clearHistory from removing pinned items ── */
+const _origClearHistory = clearHistoryBtn?.onclick;
+clearHistoryBtn?.addEventListener("click", () => {}, false); // overridden below
+
 function init() {
   const prefs = loadPrefs();
   const lang  = prefs.lang || "fr";
@@ -2174,3 +2461,43 @@ convMicBottom.addEventListener("click", () => {
   if (convListeningBottom) stopConvRec("bottom");
   else startConvRec("bottom");
 });
+
+
+/* ----------------------------------------------------------
+   NEW. TRANSLATE CHUNKED — splits large texts into ≤1000 char
+   chunks to avoid API limits and UI blocking.
+---------------------------------------------------------- */
+async function translateChunked(text, from, to, prefs) {
+  const CHUNK = 1000;
+  const sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
+  const chunks = [];
+  let current = "";
+  for (const s of sentences) {
+    if ((current + s).length > CHUNK && current) {
+      chunks.push(current.trim());
+      current = s;
+    } else {
+      current += s;
+    }
+  }
+  if (current.trim()) chunks.push(current.trim());
+
+  let combined = "";
+  let apiUsed   = null;
+  for (const chunk of chunks) {
+    let res = null;
+    if ((prefs.api === "auto" || prefs.api === "google") && !isApiOnCooldown("google")) {
+      try { res = await translateGoogle(chunk, from, to); apiUsed = "google"; } catch {}
+    }
+    if (!res && (prefs.api === "auto" || prefs.api === "mymemory") && !isApiOnCooldown("mymemory")) {
+      try { res = await translateMyMemory(chunk, from, to); apiUsed = "mymemory"; } catch {}
+    }
+    if (!res && (prefs.api === "auto" || prefs.api === "libre") && !isApiOnCooldown("libre")) {
+      try { res = await translateLibre(chunk, from, to); apiUsed = "libre"; } catch {}
+    }
+    if (res) combined += (combined ? " " : "") + res;
+    // Yield to the event loop between chunks
+    await new Promise(r => setTimeout(r, 0));
+  }
+  return { result: combined || null, apiUsed };
+}
