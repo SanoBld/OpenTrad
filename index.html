@@ -60,12 +60,6 @@
           <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
         </svg>
       </button>
-      <!-- Conversation mode button -->
-      <button id="convModeBtn" class="icon-btn conv-btn-header" title="Conversation mode (Ctrl+Shift+V)" aria-label="Conversation mode">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-        </svg>
-      </button>
       <!-- History -->
       <button id="historyBtn" class="icon-btn" title="Translation history" aria-label="View history">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -591,8 +585,28 @@
             <button class="opt-btn active" data-haptic="on">Activé</button>
             <button class="opt-btn" data-haptic="off">Désactivé</button>
           </div>
-          <p class="setting-hint">Légère vibration lors de la copie, du swap et du mode conversation.</p>
+          <p class="setting-hint">Light vibration on copy and swap actions.</p>
         </div>
+        <!-- Keyboard shortcuts reference -->
+        <div class="setting-group">
+          <label class="setting-label">⌨ Keyboard Shortcuts</label>
+          <div class="kb-settings-grid">
+            <div class="kb-group-title">Translation</div>
+            <div class="kb-row"><span>Trigger translation</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>Enter</kbd></span></div>
+            <div class="kb-row"><span>Swap languages</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>S</kbd></span></div>
+            <div class="kb-row"><span>Clear text</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>L</kbd></span></div>
+            <div class="kb-row"><span>Copy translation</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>C</kbd></span></div>
+            <div class="kb-group-title">Interface</div>
+            <div class="kb-row"><span>History</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>H</kbd></span></div>
+            <div class="kb-row"><span>Settings</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>,</kbd></span></div>
+            <div class="kb-row"><span>Focus mode</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>K</kbd></span></div>
+            <div class="kb-row"><span>Close / Cancel</span><span class="kb-keys"><kbd>Esc</kbd></span></div>
+            <div class="kb-group-title">Formatting</div>
+            <div class="kb-row"><span>Bold (result)</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>B</kbd></span></div>
+            <div class="kb-row"><span>Underline (result)</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>U</kbd></span></div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -617,152 +631,7 @@
     <span id="connToastMsg">Connecté</span>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       CONVERSATION MODE OVERLAY
-  ══════════════════════════════════════════ -->
-  <div id="convOverlay" class="conv-overlay" aria-hidden="true" role="dialog" aria-label="Conversation mode">
-    <!-- Top half (rotated 180° for person facing opposite) -->
-    <div class="conv-half conv-half--top">
-      <div class="conv-half-header">
-        <select id="convLangTop" class="conv-lang-select" aria-label="Language for top person">
-          <option value="fr">🇫🇷 Français</option>
-          <option value="en">🇬🇧 Anglais</option>
-          <option value="es">🇪🇸 Espagnol</option>
-          <option value="de">🇩🇪 Allemand</option>
-          <option value="it">🇮🇹 Italien</option>
-          <option value="pt">🇵🇹 Portugais</option>
-          <option value="ru">🇷🇺 Russe</option>
-          <option value="zh">🇨🇳 Chinois</option>
-          <option value="ja">🇯🇵 Japonais</option>
-          <option value="ko">🇰🇷 Coréen</option>
-          <option value="ar">🇸🇦 Arabe</option>
-          <option value="hi">🇮🇳 Hindi</option>
-          <option value="nl">🇳🇱 Néerlandais</option>
-          <option value="pl">🇵🇱 Polonais</option>
-          <option value="sv">🇸🇪 Suédois</option>
-          <option value="tr">🇹🇷 Turc</option>
-          <option value="uk">🇺🇦 Ukrainien</option>
-          <option value="vi">🇻🇳 Vietnamien</option>
-          <option value="id">🇮🇩 Indonésien</option>
-        </select>
-      </div>
-      <div id="convTextTop" class="conv-text">
-        <span class="conv-text-placeholder">Tap the mic and speak…</span>
-      </div>
-      <div class="conv-half-actions">
-        <button id="convMicTop" class="conv-mic-btn" aria-label="Microphone for top person">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
-          </svg>
-        </button>
-        <button id="convTtsTop" class="conv-tts-btn" aria-label="Read top text">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Center control bar -->
-    <div class="conv-bar">
-      <span id="convBarLangs" class="conv-bar-langs">FR ↔ EN</span>
-      <div class="conv-bar-actions">
-        <button id="convSwapLangs" class="conv-action-btn">⇄ Swap</button>
-        <button id="convClearBtn" class="conv-action-btn">✕ Clear</button>
-        <button id="convCloseBtn" class="conv-close-btn" aria-label="Close conversation mode">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Bottom half (normal reading orientation) -->
-    <div class="conv-half conv-half--bottom">
-      <div class="conv-half-header">
-        <select id="convLangBottom" class="conv-lang-select" aria-label="Language for bottom person">
-          <option value="en">🇬🇧 Anglais</option>
-          <option value="fr">🇫🇷 Français</option>
-          <option value="es">🇪🇸 Espagnol</option>
-          <option value="de">🇩🇪 Allemand</option>
-          <option value="it">🇮🇹 Italien</option>
-          <option value="pt">🇵🇹 Portugais</option>
-          <option value="ru">🇷🇺 Russe</option>
-          <option value="zh">🇨🇳 Chinois</option>
-          <option value="ja">🇯🇵 Japonais</option>
-          <option value="ko">🇰🇷 Coréen</option>
-          <option value="ar">🇸🇦 Arabe</option>
-          <option value="hi">🇮🇳 Hindi</option>
-          <option value="nl">🇳🇱 Néerlandais</option>
-          <option value="pl">🇵🇱 Polonais</option>
-          <option value="sv">🇸🇪 Suédois</option>
-          <option value="tr">🇹🇷 Turc</option>
-          <option value="uk">🇺🇦 Ukrainien</option>
-          <option value="vi">🇻🇳 Vietnamien</option>
-          <option value="id">🇮🇩 Indonésien</option>
-        </select>
-        <!-- Mobile-only close button on bottom half for easy thumb reach -->
-        <button class="conv-close-mobile" id="convCloseMobile" aria-label="Close conversation mode">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-      <div id="convTextBottom" class="conv-text">
-        <span class="conv-text-placeholder">Tap the mic and speak…</span>
-      </div>
-      <div class="conv-half-actions">
-        <button id="convMicBottom" class="conv-mic-btn" aria-label="Microphone for bottom person">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
-          </svg>
-        </button>
-        <button id="convTtsBottom" class="conv-tts-btn" aria-label="Read bottom text">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════════════
-       KEYBOARD SHORTCUTS HELP
-  ══════════════════════════════════════════ -->
-  <div id="kbHelpOverlay" class="kb-help-overlay" aria-hidden="true" role="dialog" aria-label="Keyboard shortcuts">
-    <div class="kb-help-box">
-      <div class="kb-help-title">
-        ⌨ Keyboard Shortcuts
-        <button id="kbHelpClose" class="kb-help-close" aria-label="Close">✕</button>
-      </div>
-
-      <div class="kb-group-title">Translation</div>
-      <div class="kb-row"><span>Trigger translation</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>Enter</kbd></span></div>
-      <div class="kb-row"><span>Swap languages</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>S</kbd></span></div>
-      <div class="kb-row"><span>Clear text</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>L</kbd></span></div>
-      <div class="kb-row"><span>Copy translation</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>C</kbd></span></div>
-
-      <div class="kb-group-title">Interface</div>
-      <div class="kb-row"><span>History</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>H</kbd></span></div>
-      <div class="kb-row"><span>Settings</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>,</kbd></span></div>
-      <div class="kb-row"><span>Focus mode</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>K</kbd></span></div>
-      <div class="kb-row"><span>Conversation mode</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>V</kbd></span></div>
-      <div class="kb-row"><span>Close / Cancel</span><span class="kb-keys"><kbd>Esc</kbd></span></div>
-
-      <div class="kb-group-title">Formatting</div>
-      <div class="kb-row"><span>Bold (result)</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>B</kbd></span></div>
-      <div class="kb-row"><span>Underline (result)</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>U</kbd></span></div>
-
-      <div class="kb-group-title">Help</div>
-      <div class="kb-row"><span>Show this help</span><span class="kb-keys"><kbd>?</kbd></span></div>
-    </div>
-  </div>
-
-  <!-- Shortcut action toast notification -->
+<!-- Shortcut action toast notification -->
   <div id="shortcutToast" class="shortcut-toast" aria-live="polite"></div>
 
   <!-- ══════════════════════════════════════════

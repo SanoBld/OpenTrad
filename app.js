@@ -1041,23 +1041,6 @@ if (sttBtn) {
 ---------------------------------------------------------- */
 
 // ── New DOM refs ──
-const convModeBtn    = document.getElementById("convModeBtn");
-const convOverlay    = document.getElementById("convOverlay");
-const convMicTop     = document.getElementById("convMicTop");
-const convMicBottom  = document.getElementById("convMicBottom");
-const convTtsTop     = document.getElementById("convTtsTop");
-const convTtsBottom  = document.getElementById("convTtsBottom");
-const convCloseMobile = document.getElementById("convCloseMobile");
-const convTextTop    = document.getElementById("convTextTop");
-const convTextBottom = document.getElementById("convTextBottom");
-const convBarLangs   = document.getElementById("convBarLangs");
-const convSwapLangs  = document.getElementById("convSwapLangs");
-const convClearBtn2  = document.getElementById("convClearBtn");
-const convCloseBtn   = document.getElementById("convCloseBtn");
-const convLangSelectTop    = document.getElementById("convLangTop");
-const convLangSelectBottom = document.getElementById("convLangBottom");
-const kbHelpOverlay  = document.getElementById("kbHelpOverlay");
-const kbHelpClose    = document.getElementById("kbHelpClose");
 const shortcutToast  = document.getElementById("shortcutToast");
 
 // ── Shortcut feedback toast ──
@@ -1087,8 +1070,6 @@ document.addEventListener("keydown", (e) => {
 
   // Esc — close any open panel
   if (e.key === "Escape") {
-    if (convOverlay.classList.contains("open"))   { closeConvMode(); return; }
-    if (kbHelpOverlay.classList.contains("open")) { closeKbHelp();   return; }
     if (historyPanel.classList.contains("open"))  { closeHistory();  return; }
     if (settingsModal.classList.contains("open")) { closeSettings(); return; }
     if (document.body.classList.contains("focus-mode")) toggleFocusMode();
@@ -1098,7 +1079,12 @@ document.addEventListener("keydown", (e) => {
   // ? — shortcuts help (when not typing)
   if (e.key === "?" && !mod && !inInput) {
     e.preventDefault();
-    toggleKbHelp();
+    openSettings();
+    // Scroll to shortcuts section after a short delay
+    setTimeout(() => {
+      const el = document.querySelector(".kb-settings-grid");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 120);
     return;
   }
 
@@ -1159,14 +1145,6 @@ document.addEventListener("keydown", (e) => {
     showShortcutToast("◈ Mode concentration");
     return;
   }
-
-  // Ctrl+Shift+V — conversation mode
-  if (e.key === "v" && e.shiftKey) {
-    e.preventDefault();
-    toggleConvMode();
-    return;
-  }
-
   // Ctrl+B — bold output (when not typing in source)
   if (e.key === "b" && !inInput) {
     e.preventDefault();
@@ -2323,225 +2301,6 @@ function rebuildCustomSelect(nativeSelect) {
 }
 
 /* ----------------------------------------------------------
-   25. CONVERSATION MODE
-   Split-screen view for face-to-face translation.
-   Top half rotated 180° for the person opposite.
-   Web Speech API for continuous voice recognition.
----------------------------------------------------------- */
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-let convLangTop    = "fr";
-let convLangBottom = "en";
-let convRecTop     = null;
-let convRecBottom  = null;
-let convListeningTop    = false;
-let convListeningBottom = false;
-
-function toggleConvMode() {
-  const isOpen = convOverlay.classList.contains("open");
-  if (isOpen) closeConvMode();
-  else openConvMode();
-}
-
-function openConvMode() {
-  // Sync with current lang selections
-  convLangTop    = sourceLang.value === "auto" ? "fr" : sourceLang.value;
-  convLangBottom = targetLang.value;
-  // Sync the in-overlay language selects
-  if (convLangSelectTop)    convLangSelectTop.value    = convLangTop;
-  if (convLangSelectBottom) convLangSelectBottom.value = convLangBottom;
-  updateConvBar();
-  convOverlay.classList.add("open");
-  convOverlay.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
-}
-
-function closeConvMode() {
-  stopConvRec("top");
-  stopConvRec("bottom");
-  convOverlay.classList.remove("open");
-  convOverlay.setAttribute("aria-hidden", "true");
-  document.body.style.overflow = "";
-}
-
-function updateConvBar() {
-  const getName = (code) => {
-    const opt = document.querySelector(`#sourceLang option[value="${code}"]`)
-             || document.querySelector(`#targetLang option[value="${code}"]`);
-    if (!opt) return code.toUpperCase();
-    return opt.textContent.replace(/^[^\s]+ /, "");
-  };
-  convBarLangs.textContent = `${getName(convLangTop)} ↔ ${getName(convLangBottom)}`;
-  // Keep selects in sync
-  if (convLangSelectTop    && convLangSelectTop.value    !== convLangTop)    convLangSelectTop.value    = convLangTop;
-  if (convLangSelectBottom && convLangSelectBottom.value !== convLangBottom) convLangSelectBottom.value = convLangBottom;
-}
-
-// Conv mode listeners — with null safety
-if (convModeBtn)    convModeBtn.addEventListener("click", openConvMode);
-if (convCloseBtn)   convCloseBtn.addEventListener("click", closeConvMode);
-if (convCloseMobile) convCloseMobile.addEventListener("click", closeConvMode);
-// Backup onclick for extra reliability
-if (convModeBtn)  convModeBtn.onclick  = openConvMode;
-if (convCloseBtn) convCloseBtn.onclick = closeConvMode;
-
-// TTS in conversation mode
-if (convTtsTop) {
-  convTtsTop.addEventListener("click", () => {
-    const text = convTextTop.dataset.raw || convTextTop.textContent.trim();
-    if (text) speak(text, convLangTop, convTtsTop);
-  });
-}
-if (convTtsBottom) {
-  convTtsBottom.addEventListener("click", () => {
-    const text = convTextBottom.dataset.raw || convTextBottom.textContent.trim();
-    if (text) speak(text, convLangBottom, convTtsBottom);
-  });
-}
-
-convSwapLangs.addEventListener("click", () => {
-  [convLangTop, convLangBottom] = [convLangBottom, convLangTop];
-  if (convLangSelectTop)    convLangSelectTop.value    = convLangTop;
-  if (convLangSelectBottom) convLangSelectBottom.value = convLangBottom;
-  updateConvBar();
-  // Swap displayed texts
-  const tmp = convTextTop.dataset.raw || "";
-  convTextTop.dataset.raw    = convTextBottom.dataset.raw || "";
-  convTextBottom.dataset.raw = tmp;
-  renderConvText("top",    convTextTop.dataset.raw);
-  renderConvText("bottom", convTextBottom.dataset.raw);
-});
-
-convClearBtn2.addEventListener("click", () => {
-  renderConvText("top", "");
-  renderConvText("bottom", "");
-});
-
-// Language selects inside conversation overlay
-if (convLangSelectTop) {
-  convLangSelectTop.addEventListener("change", () => {
-    convLangTop = convLangSelectTop.value;
-    updateConvBar();
-    stopConvRec("top");
-  });
-}
-if (convLangSelectBottom) {
-  convLangSelectBottom.addEventListener("change", () => {
-    convLangBottom = convLangSelectBottom.value;
-    updateConvBar();
-    stopConvRec("bottom");
-  });
-}
-
-function renderConvText(side, text) {
-  const el = side === "top" ? convTextTop : convTextBottom;
-  el.dataset.raw = text || "";
-  if (text && text.trim()) {
-    el.textContent = text;
-  } else {
-    el.innerHTML = `<span class="conv-text-placeholder">Appuyez sur le micro et parlez…</span>`;
-  }
-}
-
-async function translateConv(text, fromLang, toLang) {
-  try {
-    const prefs = loadPrefs();
-    const selectedApi = prefs.api || "auto";
-    if (selectedApi === "auto" || selectedApi === "google") {
-      try { return await translateGoogle(text, fromLang, toLang); } catch {}
-    }
-    if (selectedApi === "auto" || selectedApi === "mymemory") {
-      try { return await translateMyMemory(text, fromLang, toLang); } catch {}
-    }
-  } catch {}
-  return null;
-}
-
-function stopConvRec(side) {
-  if (side === "top" && convRecTop) {
-    try { convRecTop.stop(); } catch {}
-    convRecTop = null;
-    convListeningTop = false;
-    convMicTop.classList.remove("listening");
-  }
-  if (side === "bottom" && convRecBottom) {
-    try { convRecBottom.stop(); } catch {}
-    convRecBottom = null;
-    convListeningBottom = false;
-    convMicBottom.classList.remove("listening");
-  }
-}
-
-function startConvRec(side) {
-  if (!SpeechRecognition) {
-    alert("Reconnaissance vocale non supportée dans ce navigateur (essayez Chrome/Edge).");
-    return;
-  }
-  // Stop the other side first
-  stopConvRec(side === "top" ? "bottom" : "top");
-
-  const lang = side === "top" ? convLangTop : convLangBottom;
-  const toLang = side === "top" ? convLangBottom : convLangTop;
-  const micBtn = side === "top" ? convMicTop : convMicBottom;
-  const outputEl = side === "top" ? convTextBottom : convTextTop;
-
-  const rec = new SpeechRecognition();
-  rec.continuous = false;
-  rec.interimResults = true;
-  rec.lang = LANG_TO_LOCALE[lang] || lang;
-
-  if (side === "top") { convRecTop = rec; convListeningTop = true; }
-  else { convRecBottom = rec; convListeningBottom = true; }
-  micBtn.classList.add("listening");
-
-  rec.onresult = async (event) => {
-    let interim = "";
-    let final   = "";
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const t = event.results[i][0].transcript;
-      if (event.results[i].isFinal) final += t;
-      else interim += t;
-    }
-
-    const display = final || interim;
-    // Show spoken text on the speaker's side
-    const speakerEl = side === "top" ? convTextTop : convTextBottom;
-    if (display) speakerEl.textContent = display;
-
-    // Translate final result
-    if (final.trim()) {
-      outputEl.innerHTML = `<span class="conv-text-placeholder">Translating…</span>`;
-      const result = await translateConv(final.trim(), lang, toLang);
-      if (result) {
-        renderConvText(side === "top" ? "bottom" : "top", result);
-      }
-    }
-  };
-
-  rec.onend = () => {
-    stopConvRec(side);
-  };
-
-  rec.onerror = (e) => {
-    console.warn("[OpenTrad] Speech error:", e.error);
-    stopConvRec(side);
-  };
-
-  try { rec.start(); } catch (e) { stopConvRec(side); }
-}
-
-convMicTop.addEventListener("click", () => {
-  if (convListeningTop) stopConvRec("top");
-  else startConvRec("top");
-});
-
-convMicBottom.addEventListener("click", () => {
-  if (convListeningBottom) stopConvRec("bottom");
-  else startConvRec("bottom");
-});
-
-
-/* ----------------------------------------------------------
    NEW. TRANSLATE CHUNKED — splits large texts into ≤1000 char
    chunks to avoid API limits and UI blocking.
 ---------------------------------------------------------- */
@@ -2663,19 +2422,17 @@ function triggerHaptic(pattern = [10]) {
   // Observe modal/panel open states via class mutation
   const settingsModal = document.getElementById("settingsModal");
   const historyPanel  = document.getElementById("historyPanel");
-  const convOverlay   = document.getElementById("convOverlay");
-
   const observer = new MutationObserver(() => {
     const isOpen =
       settingsModal?.classList.contains("open") ||
       historyPanel?.classList.contains("open") ||
-      convOverlay?.classList.contains("open");
+      false;
 
     if (isOpen) lockScroll();
     else unlockScroll();
   });
 
-  [settingsModal, historyPanel, convOverlay].forEach(el => {
+  [settingsModal, historyPanel].forEach(el => {
     if (el) observer.observe(el, { attributes: true, attributeFilter: ["class"] });
   });
 })();

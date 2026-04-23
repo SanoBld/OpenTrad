@@ -2138,7 +2138,7 @@ body.history-open {
 
 /* ══════════════════════════════════════════════════════════════
    NEW FEATURES — v3 additions
-   Conversation Mode · Keyboard Shortcuts Help
+   Keyboard Shortcuts Help
 ══════════════════════════════════════════════════════════════ */
 
 /* ── Blur animations on loading / overlays ─────── */
@@ -2245,207 +2245,32 @@ body.history-open {
   stroke: var(--accent);
 }
 
-/* Double-click highlight on target output */
+/* Dbl-click highlight on target output */
 .target-output ::selection { background: var(--highlight-color, rgba(108,99,255,.25)); color: inherit; }
 #sourceText::selection      { background: var(--highlight-color, rgba(108,99,255,.25)); color: inherit; }
 
-/* ─── Conversation Mode ─── */
-.conv-overlay {
-  position: fixed; inset: 0;
-  z-index: 9000;
-  display: flex; flex-direction: column;
-  background: var(--bg);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity .3s ease, visibility .3s ease;
-}
-.conv-overlay.open {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: all;
-}
-.conv-half {
-  flex: 1;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  position: relative;
-}
-.conv-half--top {
-  background: var(--bg-panel-alt);
-  border-bottom: 2px solid var(--border);
-  transform: rotate(180deg);
-}
-.conv-half-actions {
-  display: flex;
-  align-items: center;
-  gap: .75rem;
-}
-/* TTS button in conv mode */
-.conv-tts-btn {
-  width: 44px; height: 44px;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  background: var(--bg-panel);
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .2s ease;
-  flex-shrink: 0;
-}
-.conv-tts-btn svg { width: 20px; height: 20px; }
-.conv-tts-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
-.conv-tts-btn.speaking { color: var(--accent); animation: pulse 1s ease-in-out infinite; }
+/* TTS button */
 
 /* Mobile close button — visible only on small screens */
-.conv-close-mobile {
-  display: none;
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  border: 1.5px solid var(--border);
-  background: var(--bg-panel);
-  color: var(--text-muted);
-  cursor: pointer;
-  align-items: center; justify-content: center;
-  transition: background .2s, color .2s;
-  flex-shrink: 0;
-}
-.conv-close-mobile svg { width: 15px; height: 15px; }
-.conv-close-mobile:hover { background: rgba(239,68,68,.15); color: #ef4444; border-color: #ef4444; }
 
 @media (max-width: 700px) {
-  .conv-close-mobile { display: flex; }
-  /* On mobile, center bar close btn still visible; conv-close-mobile is the primary exit */
-  .conv-half-header { gap: .4rem; }
-  .conv-lang-select { min-width: 100px; font-size: .72rem; }
+  
+  
 }
-.conv-text {
-  width: 100%;
-  max-width: 560px;
-  min-height: 80px;
-  font-size: clamp(1.1rem, 3.5vw, 1.7rem);
-  font-family: var(--font-body);
-  font-weight: 500;
-  color: var(--text);
-  text-align: center;
-  line-height: 1.45;
-  word-break: break-word;
-}
-.conv-text-placeholder {
-  color: var(--text-dim);
-  font-size: .85rem;
-  font-weight: 400;
-}
-.conv-mic-btn {
-  width: 70px; height: 70px;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  background: var(--bg-panel);
-  backdrop-filter: blur(12px);
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .2s ease;
-  flex-shrink: 0;
-}
-.conv-mic-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
-.conv-mic-btn.listening {
-  background: var(--spell-error);
-  border-color: var(--spell-error);
-  color: #fff;
-  animation: mic-pulse 1.2s ease infinite;
-}
-.conv-mic-btn svg { width: 28px; height: 28px; }
-@keyframes mic-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,.5); }
+
   50% { box-shadow: 0 0 0 12px rgba(239,68,68,0); }
 }
-.conv-bar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: .55rem 1.2rem;
-  background: var(--header-bg);
-  color: var(--header-text);
-  flex-shrink: 0;
-  gap: 1rem;
-}
-.conv-bar-langs {
-  font-size: .8rem;
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: .05em;
-  opacity: .9;
-}
-.conv-bar-actions {
-  display: flex; gap: .6rem; align-items: center;
-}
-.conv-action-btn {
-  background: rgba(128,128,128,.14);
-  border: 1px solid rgba(128,128,128,.22);
-  color: var(--header-text);
-  border-radius: var(--radius-sm);
-  padding: .35rem .75rem;
-  font-size: .74rem;
-  cursor: pointer;
-  transition: background .2s;
-}
-.conv-action-btn:hover { background: rgba(128,128,128,.26); }
-.conv-close-btn {
-  background: rgba(128,128,128,.14);
-  border: 1px solid rgba(128,128,128,.22);
-  color: var(--header-text);
-  border-radius: 50%;
-  width: 34px; height: 34px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  transition: background .2s;
-}
-.conv-close-btn:hover { background: rgba(239,68,68,.7); }
-.conv-close-btn svg { width: 16px; height: 16px; }
+
 /* Conv mode button in header */
-.conv-btn-header svg { width: 18px; height: 18px; }
+
 
 /* ─── Keyboard Shortcuts Help ─── */
-.kb-help-overlay {
-  position: fixed; inset: 0;
-  z-index: 8500;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(0,0,0,.5);
-  backdrop-filter: blur(4px);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .25s ease;
-}
+
 .kb-help-overlay.open {
   opacity: 1;
   pointer-events: all;
 }
-.kb-help-box {
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  backdrop-filter: blur(20px);
-  padding: 1.4rem 1.6rem;
-  width: min(480px, 94vw);
-  max-height: 85vh;
-  overflow-y: auto;
-  box-shadow: var(--shadow-hard);
-}
-.kb-help-title {
-  font-family: var(--font-display);
-  font-size: .95rem;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 1rem;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.kb-help-close {
-  background: none; border: none; cursor: pointer;
-  color: var(--text-muted); font-size: 1.1rem;
-  transition: color var(--transition);
-}
-.kb-help-close:hover { color: var(--text); }
+
 .kb-group-title {
   font-size: .67rem;
   font-weight: 700;
@@ -2479,7 +2304,7 @@ kbd {
   color: var(--text);
   box-shadow: 0 1px 0 var(--border);
 }
-.kb-desc { color: var(--text-muted); flex: 1; text-align: right; }
+
 
 /* ─── Shortcut toast (brief feedback) ─── */
 .shortcut-toast {
@@ -2574,48 +2399,9 @@ kbd {
 /* ══════════════════════════════════════════════════════════════
    CONVERSATION MODE — Language Selects per Half
 ══════════════════════════════════════════════════════════════ */
-.conv-half-header {
-  position: absolute;
-  top: .8rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-}
-
-.conv-lang-select {
-  appearance: none;
-  -webkit-appearance: none;
-  background: rgba(255,255,255,.12);
-  border: 1.5px solid rgba(255,255,255,.22);
-  color: var(--text);
-  border-radius: 50px;
-  padding: .32rem .9rem .32rem .65rem;
-  font-family: var(--font-body);
-  font-size: .78rem;
-  font-weight: 600;
-  cursor: pointer;
-  outline: none;
-  backdrop-filter: blur(8px);
-  transition: border-color .2s, background .2s;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right .55rem center;
-  padding-right: 1.7rem;
-  min-width: 120px;
-  text-align: center;
-}
-.conv-lang-select:hover  { border-color: var(--accent); background-color: rgba(255,255,255,.18); }
-.conv-lang-select:focus  { border-color: var(--accent); }
-.conv-lang-select option { background: var(--bg-panel); color: var(--text); }
 
 /* The top half is rotated 180°, so the header sits at visual bottom */
-.conv-half--top .conv-half-header {
-  top: auto;
-  bottom: .8rem;
-}
+
 
 /* ══════════════════════════════════════════════════════════════
    MATERIAL YOU — color-mix() pour le thème par défaut (sans accent)
@@ -2691,17 +2477,11 @@ kbd {
   box-shadow: none;
 }
 [data-theme="paper"] .kb-help-box,
-[data-theme="paper-dark"] .kb-help-box {
-  border: 1px solid var(--border);
-  box-shadow: none;
-}
+[data-theme="paper-dark"] 
 
 /* Classic: 2px bold border, hard shadow */
 [data-theme="classic"] .kb-help-box,
-[data-theme="classic-dark"] .kb-help-box {
-  border: 2px solid var(--border);
-  box-shadow: 4px 4px 0 var(--accent);
-}
+[data-theme="classic-dark"] 
 [data-theme="classic"] .modal-box,
 [data-theme="classic-dark"] .modal-box {
   border: 2px solid var(--border);
@@ -2710,10 +2490,7 @@ kbd {
 
 /* Material You: 1.5px, 28px radius everywhere */
 [data-theme="material"] .kb-help-box,
-[data-theme="material-dark"] .kb-help-box {
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius);
-}
+[data-theme="material-dark"] 
 [data-theme="material"] .spell-panel,
 [data-theme="material-dark"] .spell-panel {
   border-radius: 0 0 var(--radius) var(--radius);
@@ -3493,172 +3270,53 @@ kbd {
 /* ═══════════════════════════════════════════════════════════════
    OPENTRAD — OPTIMIZATION PATCH v3.1
    Mobile-first layout · Header redesign · Visual consistency fixes
-   All comments in English
 ═══════════════════════════════════════════════════════════════ */
 
 /* ──────────────────────────────────────────
    MOBILE LAYOUT — Stack panels vertically on small screens
-   The default 3-column grid (1fr auto 1fr) is replaced
-   with a single-column flex column on mobile.
 ────────────────────────────────────────── */
 @media (max-width: 700px) {
-  /* Switch from 3-col grid to vertical flex stack */
   .translator-wrap {
     display: flex !important;
     flex-direction: column !important;
     gap: .65rem;
     padding: 0 .75rem;
-    margin-bottom: 5rem; /* extra space for mobile bottom bar */
+    margin-bottom: 5rem;
   }
-
-  /* Full-width panels */
-  .panel--source,
-  .panel--target {
-    width: 100%;
-    min-width: 0;
-  }
-
-  /* Swap button: horizontal row between panels */
-  .swap-wrap {
-    order: 2; /* source=1, swap=2, target=3 */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: .1rem 0;
-  }
-
-  /* Explicit panel ordering */
+  .panel--source, .panel--target { width: 100%; min-width: 0; }
+  .swap-wrap { order: 2; display: flex; justify-content: center; align-items: center; padding: .1rem 0; }
   .panel--source { order: 1; }
   .panel--target { order: 3; }
-
-  /* Larger tap targets on mobile for text areas */
-  #sourceText,
-  .target-output {
-    min-height: 180px !important;
-    font-size: .95rem !important;
-    line-height: 1.65 !important;
-    padding: 1rem !important;
-  }
-
-  /* Panel header: wrap actions gracefully */
-  .panel-header {
-    flex-wrap: wrap;
-    gap: .3rem;
-    padding: .5rem .75rem;
-  }
-
-  /* Prevent overflow on panel action buttons */
-  .panel-actions {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    gap: .15rem;
-  }
+  #sourceText, .target-output { min-height: 180px !important; font-size: .95rem !important; line-height: 1.65 !important; padding: 1rem !important; }
+  .panel-header { flex-wrap: wrap; gap: .3rem; padding: .5rem .75rem; }
+  .panel-actions { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; gap: .15rem; }
   .panel-actions::-webkit-scrollbar { display: none; }
-
-  /* Select dropdowns — full width in panel header */
-  .panel-header select,
-  .panel-header .cselect-btn {
-    min-width: 0;
-    max-width: 160px;
-    font-size: .8rem;
-  }
-
-  /* Footer: ensure it doesn't overflow */
-  .panel-footer {
-    flex-wrap: wrap;
-    gap: .3rem;
-    padding: .4rem .75rem;
-  }
-
-  /* Hero section: compact on mobile */
-  .hero {
-    padding: 1rem .75rem .5rem;
-  }
-  .hero-title {
-    font-size: clamp(1.5rem, 7vw, 2.2rem) !important;
-  }
-
-  /* Spell panel: constrained height */
-  .spell-panel {
-    max-height: 160px;
-    overflow-y: auto;
-  }
-
-  /* Spell tooltip: always visible within viewport */
-  .spell-tooltip {
-    max-width: calc(100vw - 2rem);
-    left: .75rem !important;
-    right: .75rem !important;
-  }
-
-  /* API compare inline panel: mobile-safe sizing */
-  .api-compare-inline {
-    max-height: 45dvh;
-    overflow-y: auto;
-  }
-
-  /* Btn dividers: hide on small screens to save space */
-  .btn-divider {
-    display: none;
-  }
-
-  /* Focus close btn: position for stacked layout */
-  .focus-close-btn {
-    top: -.5rem;
-    right: .75rem;
-  }
-
-  /* Installation banner: compact */
-  .install-banner {
-    flex-direction: column;
-    align-items: center;
-    gap: .4rem;
-    text-align: center;
-    padding: .65rem 1rem;
-    font-size: .74rem;
-  }
+  .panel-header select, .panel-header .cselect-btn { min-width: 0; max-width: 160px; font-size: .8rem; }
+  .panel-footer { flex-wrap: wrap; gap: .3rem; padding: .4rem .75rem; }
+  .hero { padding: 1rem .75rem .5rem; }
+  .hero-title { font-size: clamp(1.5rem, 7vw, 2.2rem) !important; }
+  .spell-panel { max-height: 160px; overflow-y: auto; }
+  .spell-tooltip { max-width: calc(100vw - 2rem); left: .75rem !important; right: .75rem !important; }
+  .api-compare-inline { max-height: 45dvh; overflow-y: auto; }
+  .btn-divider { display: none; }
+  .focus-close-btn { top: -.5rem; right: .75rem; }
+  .install-banner { flex-direction: column; align-items: center; gap: .4rem; text-align: center; padding: .65rem 1rem; font-size: .74rem; }
 }
 
 /* ──────────────────────────────────────────
    TABLET BREAKPOINT (701px – 900px)
-   Slightly tighter layout than desktop
 ────────────────────────────────────────── */
 @media (min-width: 701px) and (max-width: 900px) {
-  .translator-wrap {
-    padding: 0 .85rem;
-    gap: 0;
-  }
-
-  /* Slightly tighter panels */
-  #sourceText,
-  .target-output {
-    min-height: 200px;
-  }
-
-  /* Compress panel action buttons on tablet */
-  .icon-btn--small {
-    padding: .28rem;
-  }
-  .icon-btn--small svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  /* Hide some less critical panel actions on tablet */
+  .translator-wrap { padding: 0 .85rem; gap: 0; }
+  #sourceText, .target-output { min-height: 200px; }
+  .icon-btn--small { padding: .28rem; }
+  .icon-btn--small svg { width: 14px; height: 14px; }
   .btn-divider { display: none; }
 }
 
 /* ──────────────────────────────────────────
-   HEADER REDESIGN — Seamless integration
-   The header blends into the page background
-   rather than using a stark contrasting bar.
-   Uses a frosted glass effect that matches
-   the current theme's aesthetic.
+   HEADER — Frosted glass, blends with theme
 ────────────────────────────────────────── */
-
-/* ── Base header: blended frosted glass ── */
 .site-header {
   height: 56px !important;
   border-bottom: none !important;
@@ -3666,8 +3324,6 @@ kbd {
   backdrop-filter: blur(20px) saturate(160%) !important;
   -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
 }
-
-/* Subtle separator line using theme border color */
 .site-header::after {
   content: "";
   position: absolute;
@@ -3678,135 +3334,66 @@ kbd {
   background: var(--border);
   opacity: 0.6;
 }
-
-/* Glass light: header blends with gradient bg */
-[data-theme="light"] .site-header {
-  background: rgba(238, 240, 255, 0.72) !important;
-  color: var(--text) !important;
-}
+[data-theme="light"] .site-header { background: rgba(238,240,255,0.72) !important; color: var(--text) !important; }
 [data-theme="light"] .site-header .icon-btn { color: var(--text) !important; }
 [data-theme="light"] .site-header .icon-btn:hover { background: rgba(108,99,255,.1) !important; }
 [data-theme="light"] .logo { color: var(--text) !important; }
-[data-theme="light"] .site-header::after { background: var(--border); opacity: 0.5; }
 
-/* Glass dark: darker transparent overlay */
-[data-theme="dark"] .site-header {
-  background: rgba(10, 10, 20, 0.7) !important;
-  color: var(--text) !important;
-}
+[data-theme="dark"] .site-header { background: rgba(10,10,20,0.7) !important; color: var(--text) !important; }
 [data-theme="dark"] .site-header .icon-btn { color: var(--text-muted) !important; }
 [data-theme="dark"] .site-header .icon-btn:hover { color: var(--text) !important; background: rgba(167,139,250,.12) !important; }
 [data-theme="dark"] .logo { color: var(--text) !important; }
 
-/* Aurora: deep transparent */
-[data-theme="aurora"] .site-header {
-  background: rgba(6, 6, 20, 0.6) !important;
-  color: var(--text) !important;
-}
+[data-theme="aurora"] .site-header { background: rgba(6,6,20,0.6) !important; color: var(--text) !important; }
 [data-theme="aurora"] .site-header .icon-btn { color: var(--text-muted) !important; }
 [data-theme="aurora"] .site-header .icon-btn:hover { color: var(--accent) !important; background: rgba(167,139,250,.12) !important; }
 [data-theme="aurora"] .logo { color: var(--text) !important; }
 
-/* Neumorphism: matches the bg surface */
-[data-theme="neuro"] .site-header {
-  background: rgba(226, 230, 239, 0.85) !important;
-  color: var(--text) !important;
-  backdrop-filter: blur(8px) !important;
-}
+[data-theme="neuro"] .site-header { background: rgba(226,230,239,0.85) !important; color: var(--text) !important; backdrop-filter: blur(8px) !important; }
 [data-theme="neuro"] .site-header .icon-btn { color: var(--text-muted) !important; }
-[data-theme="neuro"] .site-header .icon-btn:hover { color: var(--text) !important; }
-[data-theme="neuro"] .logo { color: var(--text) !important; }
-[data-theme="neuro-dark"] .site-header {
-  background: rgba(30, 33, 48, 0.88) !important;
-  color: var(--text) !important;
-}
+[data-theme="neuro"] .logo, [data-theme="neuro"] .site-header .logo-text, [data-theme="neuro"] .site-header .logo-text em { color: var(--text) !important; }
+[data-theme="neuro"] .site-header .logo-icon { color: var(--accent) !important; }
+[data-theme="neuro-dark"] .site-header { background: rgba(30,33,48,0.88) !important; color: var(--text) !important; }
 [data-theme="neuro-dark"] .site-header .icon-btn { color: var(--text-muted) !important; }
-[data-theme="neuro-dark"] .logo { color: var(--text) !important; }
+[data-theme="neuro-dark"] .logo, [data-theme="neuro-dark"] .site-header .logo-text, [data-theme="neuro-dark"] .site-header .logo-text em { color: var(--text) !important; }
+[data-theme="neuro-dark"] .site-header .logo-icon { color: var(--accent) !important; }
 
-/* Bento: clean white/dark surface */
-[data-theme="bento"] .site-header {
-  background: rgba(255, 255, 255, 0.88) !important;
-  color: var(--text) !important;
-  border-bottom: 1px solid var(--border) !important;
-}
+[data-theme="bento"] .site-header { background: rgba(255,255,255,0.88) !important; color: var(--text) !important; border-bottom: 1px solid var(--border) !important; }
 [data-theme="bento"] .site-header::after { display: none; }
 [data-theme="bento"] .site-header .icon-btn { color: var(--text-muted) !important; }
 [data-theme="bento"] .logo { color: var(--text) !important; }
-[data-theme="bento-dark"] .site-header {
-  background: rgba(14, 14, 24, 0.88) !important;
-  color: var(--text) !important;
-  border-bottom: 1px solid var(--border) !important;
-}
+[data-theme="bento-dark"] .site-header { background: rgba(14,14,24,0.88) !important; color: var(--text) !important; border-bottom: 1px solid var(--border) !important; }
 [data-theme="bento-dark"] .site-header::after { display: none; }
 [data-theme="bento-dark"] .site-header .icon-btn { color: var(--text-muted) !important; }
 [data-theme="bento-dark"] .logo { color: var(--text) !important; }
 
-/* Paper White: plain white / black */
-[data-theme="paper"] .site-header {
-  background: rgba(255, 255, 255, 0.95) !important;
-  color: var(--text) !important;
-  border-bottom: 1px solid var(--border) !important;
-}
+[data-theme="paper"] .site-header { background: rgba(255,255,255,0.95) !important; color: var(--text) !important; border-bottom: 1px solid var(--border) !important; }
 [data-theme="paper"] .site-header::after { display: none; }
 [data-theme="paper"] .site-header .icon-btn { color: var(--text-muted) !important; }
 [data-theme="paper"] .logo { color: var(--text) !important; }
-[data-theme="paper-dark"] .site-header {
-  background: rgba(17, 17, 17, 0.92) !important;
-  color: var(--text) !important;
-}
+[data-theme="paper-dark"] .site-header { background: rgba(17,17,17,0.92) !important; color: var(--text) !important; }
 [data-theme="paper-dark"] .site-header .icon-btn { color: var(--text-muted) !important; }
 [data-theme="paper-dark"] .logo { color: var(--text) !important; }
 
-/* Classic: uses accent border bottom only */
-[data-theme="classic"] .site-header {
-  background: rgba(245, 242, 235, 0.9) !important;
-  color: var(--text) !important;
-}
+[data-theme="classic"] .site-header { background: rgba(245,242,235,0.9) !important; color: var(--text) !important; }
 [data-theme="classic"] .site-header .icon-btn { color: var(--text-muted) !important; }
 [data-theme="classic"] .logo { color: var(--text) !important; }
-[data-theme="classic-dark"] .site-header {
-  background: rgba(15, 15, 20, 0.9) !important;
-  color: var(--text) !important;
-}
+[data-theme="classic-dark"] .site-header { background: rgba(15,15,20,0.9) !important; color: var(--text) !important; }
 [data-theme="classic-dark"] .site-header .icon-btn { color: var(--text-muted) !important; }
 [data-theme="classic-dark"] .logo { color: var(--text) !important; }
 
-/* Material You: tonal surface header */
-[data-theme="material"] .site-header {
-  background: rgba(254, 247, 255, 0.85) !important;
-  color: var(--text) !important;
-  backdrop-filter: blur(16px) !important;
-}
+[data-theme="material"] .site-header { background: rgba(254,247,255,0.85) !important; color: var(--text) !important; backdrop-filter: blur(16px) !important; }
 [data-theme="material"] .site-header .icon-btn { color: var(--text-muted) !important; }
 [data-theme="material"] .logo { color: var(--text) !important; }
-[data-theme="material-dark"] .site-header {
-  background: rgba(20, 18, 24, 0.85) !important;
-  color: var(--text) !important;
-  backdrop-filter: blur(16px) !important;
-}
+[data-theme="material-dark"] .site-header { background: rgba(20,18,24,0.85) !important; color: var(--text) !important; backdrop-filter: blur(16px) !important; }
 [data-theme="material-dark"] .site-header .icon-btn { color: var(--text-muted) !important; }
 [data-theme="material-dark"] .logo { color: var(--text) !important; }
 
-/* ── Logo refinement: slimmer, more integrated ── */
-.logo {
-  gap: .45rem !important;
-  font-size: 1.15rem !important;
-}
-.logo-icon {
-  font-size: 1.25rem !important;
-}
+.logo { gap: .45rem !important; font-size: 1.15rem !important; }
+.logo-icon { font-size: 1.25rem !important; }
+.site-header .icon-btn { padding: .38rem .42rem !important; border-radius: 10px !important; }
+.site-header .icon-btn svg { width: 18px !important; height: 18px !important; }
 
-/* ── Header icon buttons: refined sizing ── */
-.site-header .icon-btn {
-  padding: .38rem .42rem !important;
-  border-radius: 10px !important;
-}
-.site-header .icon-btn svg {
-  width: 18px !important;
-  height: 18px !important;
-}
-
-/* ── Btn label (history text): hidden on medium screens too ── */
 @media (max-width: 860px) {
   .btn-label { display: none !important; }
   .site-header { padding: 0 1rem !important; }
@@ -3814,336 +3401,134 @@ kbd {
 
 /* ──────────────────────────────────────────
    VISUAL CONSISTENCY FIXES
-   Prevent overflow, fix border artefacts,
-   correct z-index stacking issues.
 ────────────────────────────────────────── */
-
-/* Prevent horizontal scroll on body */
-html, body {
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-/* Fix: spell overlay must clip within panel bounds */
-.panel--source {
-  overflow: hidden !important;
-  position: relative;
-}
-.textarea-wrap {
-  overflow: hidden !important;
-  border-radius: 0 !important; /* No radius on inner wrap */
-}
-
-/* Fix: panel borders don't double up at header border bottom */
-.panel-header {
-  border-bottom: 1px solid var(--border) !important;
-}
-
-/* Fix: loading overlay must not bleed outside rounded panel */
-.panel--target {
-  overflow: hidden !important;
-  position: relative;
-}
-.loading-overlay {
-  border-radius: 0 0 var(--radius) var(--radius) !important;
-}
-
-/* Fix: api-compare inline panel — prevent bleed outside panel */
-.api-compare-inline {
-  margin: 0;
-  border-top: 1px solid var(--border);
-  border-radius: 0 0 var(--radius) var(--radius);
-  overflow: hidden;
-}
-.api-compare-inline[aria-hidden="false"],
-.api-compare-inline.open {
-  border-radius: 0 0 var(--radius) var(--radius) !important;
-}
-
-/* Fix: spell panel must not overflow panel border radius */
-.spell-panel {
-  border-radius: 0 !important;
-  margin: 0 !important;
-  width: 100% !important;
-}
-
-/* Fix: clear button inside textarea — proper alignment */
-.clear-inline-btn {
-  position: absolute;
-  top: .6rem;
-  right: .6rem;
-  z-index: 5;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: none;
-  background: var(--bg-panel-alt);
-  color: var(--text-muted);
-  cursor: pointer;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  transition: background var(--transition), color var(--transition);
-  flex-shrink: 0;
-}
+html, body { max-width: 100%; overflow-x: hidden; }
+.panel--source { overflow: hidden !important; position: relative; }
+.textarea-wrap { overflow: hidden !important; border-radius: 0 !important; }
+.panel-header { border-bottom: 1px solid var(--border) !important; }
+.panel--target { overflow: hidden !important; position: relative; }
+.loading-overlay { border-radius: 0 0 var(--radius) var(--radius) !important; }
+.api-compare-inline { margin: 0; border-top: 1px solid var(--border); border-radius: 0 0 var(--radius) var(--radius); overflow: hidden; }
+.spell-panel { border-radius: 0 !important; margin: 0 !important; width: 100% !important; }
+.clear-inline-btn { position: absolute; top: .6rem; right: .6rem; z-index: 5; width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--bg-panel-alt); color: var(--text-muted); cursor: pointer; display: none; align-items: center; justify-content: center; transition: background var(--transition), color var(--transition); flex-shrink: 0; }
 .clear-inline-btn svg { width: 13px; height: 13px; }
 .clear-inline-btn:hover { background: rgba(239,68,68,.15); color: #ef4444; }
 #sourceText:not(:placeholder-shown) ~ .clear-inline-btn { display: flex; }
-
-/* Fix: info chip overflow in narrow headers */
-.header-info-bar {
-  min-width: 0;
-  overflow: hidden;
-}
-.info-chip {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Fix: swap button vertical overlap on desktop */
-.swap-wrap {
-  z-index: 2;
-  position: relative;
-}
-
-/* Fix: translation progress bar goes to 100% of target panel */
-.transl-progress {
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
-  border-radius: 0;
-  width: 0;
-  transition: width .4s ease;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1;
-}
-.transl-progress.running {
-  animation: progressRun 1.8s ease-in-out infinite;
-}
-@keyframes progressRun {
-  0%   { width: 0; left: 0; }
-  50%  { width: 70%; left: 15%; }
-  100% { width: 0; left: 100%; }
-}
-
-/* Fix: modal box must not overflow on small screens */
-.modal-box {
-  max-height: calc(100dvh - 2rem);
-  overflow-y: auto;
-  width: min(520px, calc(100vw - 2rem));
-}
-
-/* Fix: history panel overflow on very small screens */
-@media (max-width: 400px) {
-  .history-panel {
-    width: 100vw !important;
-    border-radius: 0 !important;
-  }
-  .modal-box {
-    width: calc(100vw - 1rem) !important;
-    border-radius: var(--radius-sm) !important;
-  }
+.header-info-bar { min-width: 0; overflow: hidden; }
+.info-chip { max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+.swap-wrap { z-index: 2; position: relative; }
+.modal-box { max-height: calc(100dvh - 2rem); overflow-y: auto; width: min(520px, calc(100vw - 2rem)); }
+.target-output { position: relative; z-index: 1; }
+.panel-header select { min-width: 0; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 700px) {
+  .panel-header select { max-width: 130px; font-size: .78rem !important; }
+  .history-panel { width: 100vw !important; }
+  .modal-box { width: calc(100vw - 1rem) !important; border-radius: var(--radius-sm) !important; }
+  .hero.dismissed { height: 0; padding: 0; margin: 0; overflow: hidden; }
+  
 }
 
 /* ──────────────────────────────────────────
-   MOBILE BOTTOM BAR — Enhanced visibility
+   MOBILE BOTTOM BAR — Enhanced
 ────────────────────────────────────────── */
 @media (max-width: 700px) {
-  .mobile-bottom-bar {
-    background: var(--bg-panel) !important;
-    border-top: 1.5px solid var(--border) !important;
-    box-shadow: 0 -4px 20px rgba(0,0,0,.10);
-    backdrop-filter: blur(20px) saturate(150%);
-    -webkit-backdrop-filter: blur(20px) saturate(150%);
-  }
-
-  .mobile-bar-btn {
-    flex: 1;
-    font-size: .68rem;
-    padding: .6rem .5rem;
-    border-radius: 10px;
-    min-width: 0;
-  }
-
-  .mobile-bar-btn svg {
-    width: 22px;
-    height: 22px;
-  }
-
-  /* Active/focused state */
-  .mobile-bar-btn:hover,
-  .mobile-bar-btn:focus {
-    background: var(--bg-panel-alt);
-    color: var(--accent);
-  }
+  .mobile-bottom-bar { background: var(--bg-panel) !important; border-top: 1.5px solid var(--border) !important; box-shadow: 0 -4px 20px rgba(0,0,0,.10); backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%); }
+  .mobile-bar-btn { flex: 1; font-size: .68rem; padding: .6rem .5rem; border-radius: 10px; min-width: 0; }
+  .mobile-bar-btn svg { width: 22px; height: 22px; }
+  .mobile-bar-btn:hover, .mobile-bar-btn:focus { background: var(--bg-panel-alt); color: var(--accent); }
+  .icon-btn--small { padding: .4rem !important; min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+  select { font-size: 16px !important; }
+  #sourceText { font-size: 16px !important; -webkit-text-size-adjust: 100%; }
+  .swap-btn { width: 46px; height: 46px; }
 }
 
 /* ──────────────────────────────────────────
-   TOUCH IMPROVEMENTS for mobile
-────────────────────────────────────────── */
-@media (max-width: 700px) {
-  /* Larger tap targets for all interactive elements */
-  .icon-btn--small {
-    padding: .4rem !important;
-    min-width: 36px;
-    min-height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* Select: native browser styling on mobile */
-  select {
-    font-size: 16px !important; /* Prevents iOS zoom on focus */
-  }
-
-  /* Textarea: prevent iOS auto-zoom */
-  #sourceText {
-    font-size: 16px !important;
-    -webkit-text-size-adjust: 100%;
-  }
-
-  /* Swap button: larger touch area */
-  .swap-btn {
-    width: 46px;
-    height: 46px;
-  }
-
-  /* Conversation mode: better mobile layout */
-  .conv-bar {
-    padding: .5rem .75rem;
-    flex-wrap: wrap;
-    gap: .4rem;
-  }
-  .conv-bar-actions {
-    flex-wrap: wrap;
-    gap: .3rem;
-  }
-  .conv-mic-btn {
-    width: 64px;
-    height: 64px;
-  }
-}
-
-/* ──────────────────────────────────────────
-   KEYBOARD SHORTCUTS PANEL — mobile friendly
-────────────────────────────────────────── */
-@media (max-width: 700px) {
-  .kb-help-box {
-    width: calc(100vw - 2rem);
-    max-height: 80dvh;
-    overflow-y: auto;
-  }
-}
-
-/* ──────────────────────────────────────────
-   FIX: Hero section alignment on mobile
-   Prevents hero from pushing panels off screen
-────────────────────────────────────────── */
-@media (max-width: 700px) {
-  .hero.dismissed {
-    height: 0;
-    padding: 0;
-    margin: 0;
-    overflow: hidden;
-  }
-}
-
-/* ──────────────────────────────────────────
-   FIX: Neumorphism header adapts to theme text
-   (was showing wrong colors in some combos)
-────────────────────────────────────────── */
-[data-theme="neuro"] .site-header .logo-text,
-[data-theme="neuro"] .site-header .logo-text em,
-[data-theme="neuro-dark"] .site-header .logo-text,
-[data-theme="neuro-dark"] .site-header .logo-text em {
-  color: var(--text) !important;
-}
-[data-theme="neuro"] .site-header .logo-icon,
-[data-theme="neuro-dark"] .site-header .logo-icon {
-  color: var(--accent) !important;
-}
-
-/* ──────────────────────────────────────────
-   FIX: OCR status wrapping in panel header
-────────────────────────────────────────── */
-.ocr-status {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 80px;
-}
-@media (max-width: 700px) {
-  .ocr-status { max-width: 50px; }
-}
-
-/* ──────────────────────────────────────────
-   FIX: Copy tooltip position — prevent off-screen
-────────────────────────────────────────── */
-.copy-tooltip {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  right: 0;
-  left: auto;
-  white-space: nowrap;
-  z-index: 100;
-}
-
-/* ──────────────────────────────────────────
-   FIX: Target output z-index — must sit above
-   translation progress bar
-────────────────────────────────────────── */
-.target-output {
-  position: relative;
-  z-index: 1;
-}
-
-/* ──────────────────────────────────────────
-   FIX: Panel header select overflow — prevent
-   the flag emoji + text from clipping mid-char
-────────────────────────────────────────── */
-.panel-header select {
-  min-width: 0;
-  max-width: 180px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-@media (max-width: 700px) {
-  .panel-header select {
-    max-width: 130px;
-    font-size: .78rem !important; /* override iOS 16px rule for selects */
-  }
-}
-
-/* ──────────────────────────────────────────
-   SAFE AREA INSET — iOS notch / bottom bar
+   SAFE AREA INSETS (iOS notch / home bar)
 ────────────────────────────────────────── */
 .site-header {
   padding-top: env(safe-area-inset-top) !important;
   height: calc(56px + env(safe-area-inset-top)) !important;
 }
 @media (max-width: 700px) {
-  .site-header {
-    height: calc(52px + env(safe-area-inset-top)) !important;
-  }
-  body {
-    padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important;
-  }
+  .site-header { height: calc(52px + env(safe-area-inset-top)) !important; }
+  body { padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
 }
 
 /* ──────────────────────────────────────────
    SMOOTH SCROLL on iOS
 ────────────────────────────────────────── */
-.history-list,
-.modal-body,
-.spell-panel,
-.api-compare-body,
-.kb-help-box {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+.history-list, .modal-body, .spell-panel, .api-compare-body, 
+
+/* ──────────────────────────────────────────
+   KEYBOARD SHORTCUTS — inside settings modal
+────────────────────────────────────────── */
+.kb-settings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  margin-top: .2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 
+.kb-group-title {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: .5rem .75rem .25rem;
+  background: var(--bg-panel-alt);
+  border-top: 1px solid var(--border);
+}
+.kb-settings-grid .kb-group-title:first-child {
+  border-top: none;
+}
+
+.kb-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .42rem .75rem;
+  font-size: .76rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  background: var(--bg-panel);
+  gap: .5rem;
+  transition: background var(--transition);
+}
+.kb-row:hover {
+  background: var(--bg-panel-alt);
+}
+.kb-row span:first-child {
+  flex: 1;
+  color: var(--text);
+}
+
+.kb-keys {
+  display: flex;
+  align-items: center;
+  gap: .2rem;
+  flex-shrink: 0;
+}
+
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .15rem .4rem;
+  min-width: 24px;
+  height: 22px;
+  font-family: var(--font-body);
+  font-size: .67rem;
+  font-weight: 600;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 1px 0 var(--border);
+  white-space: nowrap;
+  line-height: 1;
+}
