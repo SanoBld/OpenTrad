@@ -128,7 +128,7 @@ async function cacheFirst(request, fallbackUrl) {
       if (fallback) return fallback;
     }
     return new Response(
-      "Contenu hors-ligne non disponible.",
+      "Offline content not available.",
       { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } }
     );
   }
@@ -147,7 +147,7 @@ async function networkFirst(request) {
     if (cached) return cached;
 
     return new Response(
-      JSON.stringify({ error: "Hors-ligne — service de traduction non disponible." }),
+      JSON.stringify({ error: "Offline — translation service unavailable." }),
       { status: 503, headers: { "Content-Type": "application/json" } }
     );
   }

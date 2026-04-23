@@ -2,7 +2,7 @@
 <html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>OpenTrad — Traducteur gratuit</title>
 
   <!-- PWA Meta Tags -->
@@ -55,33 +55,33 @@
     <div id="headerInfoBar" class="header-info-bar" aria-live="polite"></div>
     <div class="header-actions">
       <!-- Focus mode -->
-      <button id="focusBtn" class="icon-btn" title="Mode concentration" aria-label="Mode concentration" aria-pressed="false">
+      <button id="focusBtn" class="icon-btn" title="Focus mode" aria-label="Focus mode" aria-pressed="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
         </svg>
       </button>
-      <!-- Conversation mode -->
-      <button id="convModeBtn" class="icon-btn conv-btn-header" title="Mode conversation (Ctrl+Shift+V)" aria-label="Mode conversation">
+      <!-- Conversation mode button -->
+      <button id="convModeBtn" class="icon-btn conv-btn-header" title="Conversation mode (Ctrl+Shift+V)" aria-label="Conversation mode">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
       </button>
       <!-- History -->
-      <button id="historyBtn" class="icon-btn" title="Historique des traductions" aria-label="Voir l'historique">
+      <button id="historyBtn" class="icon-btn" title="Translation history" aria-label="View history">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
         </svg>
-        <span class="btn-label" data-i18n="history">Historique</span>
+        <span class="btn-label" data-i18n="history">History</span>
       </button>
       <!-- Settings -->
-      <button id="settingsBtn" class="icon-btn" title="Paramètres" aria-label="Ouvrir les paramètres">
+      <button id="settingsBtn" class="icon-btn" title="Settings" aria-label="Open settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"/>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
       </button>
-      <!-- Theme Toggle (sun/moon) -->
-      <button id="themeToggle" class="icon-btn" title="Basculer clair/sombre" aria-label="Basculer le thème">
+      <!-- Theme toggle (sun/moon) -->
+      <button id="themeToggle" class="icon-btn" title="Toggle light/dark" aria-label="Toggle theme">
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <circle cx="12" cy="12" r="5"/>
           <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
@@ -104,7 +104,7 @@
       <span data-i18n="heroTitle">Traduisez</span>
       <span class="accent" data-i18n="heroAccent"> instantanément</span>
     </h1>
-    <span class="hero-dismiss-hint" aria-hidden="true">Appuyez pour masquer ✕</span>
+    <span class="hero-dismiss-hint" aria-hidden="true">Tap to hide ✕</span>
   </section>
 
   <!-- ══════════════════════════════════════════
@@ -116,7 +116,7 @@
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
         <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
       </svg>
-      <p>Déposez un fichier <strong>.txt / PDF / image</strong></p>
+      <p>Drop a file <strong>.txt / PDF / image</strong></p>
     </div>
   </div>
 
@@ -125,16 +125,16 @@
   ══════════════════════════════════════════ -->
   <main class="translator-wrap" id="dropZone">
     <!-- Focus mode exit button -->
-    <button id="focusCloseBtn" class="focus-close-btn" title="Quitter le mode concentration" aria-label="Quitter le mode concentration">
+    <button id="focusCloseBtn" class="focus-close-btn" title="Exit focus mode" aria-label="Exit focus mode">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
     </button>
 
-    <!-- ── Source Panel ── -->
+    <!-- Source Panel -->
     <section class="panel panel--source">
       <div class="panel-header" id="sourcePanelHeader">
-        <select id="sourceLang" aria-label="Langue source">
+        <select id="sourceLang" aria-label="Source language">
           <option value="auto">🔍 Détection auto</option>
           <option value="fr">🇫🇷 Français</option>
           <option value="en">🇬🇧 Anglais</option>
@@ -157,27 +157,27 @@
           <option value="id">🇮🇩 Indonésien</option>
         </select>
         <div class="panel-actions">
-          <!-- Group 1: formatting -->
-          <button id="boldBtn" class="icon-btn icon-btn--small fmt-btn" title="Gras (Ctrl+B)" aria-label="Mettre en gras" aria-pressed="false">
+          <!-- Group 1: formatting buttons -->
+          <button id="boldBtn" class="icon-btn icon-btn--small fmt-btn" title="Bold (Ctrl+B)" aria-label="Bold" aria-pressed="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
               <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
             </svg>
           </button>
-          <button id="underlineBtn" class="icon-btn icon-btn--small fmt-btn" title="Souligner (Ctrl+U)" aria-label="Souligner" aria-pressed="false">
+          <button id="underlineBtn" class="icon-btn icon-btn--small fmt-btn" title="Underline (Ctrl+U)" aria-label="Underline" aria-pressed="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/>
             </svg>
           </button>
           <span class="btn-divider" aria-hidden="true"></span>
-          <!-- Group 2: tools -->
-          <button id="spellBtn" class="icon-btn icon-btn--small active" title="Correction orthographique" aria-label="Activer/désactiver la correction">
+          <!-- Group 2: tool buttons -->
+          <button id="spellBtn" class="icon-btn icon-btn--small active" title="Spell check" aria-label="Toggle spell check">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <polyline points="4 7 4 4 20 4 20 7"/>
               <line x1="9" y1="20" x2="15" y2="20"/>
               <line x1="12" y1="4" x2="12" y2="20"/>
             </svg>
           </button>
-          <button id="uploadBtn" class="icon-btn icon-btn--small" title="Charger un fichier (.txt, PDF, image)" aria-label="Charger un fichier">
+          <button id="uploadBtn" class="icon-btn icon-btn--small" title="Upload a file (.txt, PDF, image)" aria-label="Upload file">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
@@ -186,8 +186,8 @@
           <span id="ocrStatus" class="ocr-status" aria-live="polite"></span>
           <input type="file" id="fileInput" accept=".txt,.pdf,image/jpeg,image/png,image/webp" hidden />
           <span class="btn-divider" aria-hidden="true"></span>
-          <!-- Group 3: audio / font -->
-          <button id="sttBtn" class="icon-btn icon-btn--small stt-btn" title="Dicter (reconnaissance vocale)" aria-label="Dicter un texte">
+          <!-- Group 3: audio / font buttons -->
+          <button id="sttBtn" class="icon-btn icon-btn--small stt-btn" title="Dictate (voice recognition)" aria-label="Dictate text">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
@@ -195,14 +195,14 @@
               <line x1="8" y1="23" x2="16" y2="23"/>
             </svg>
           </button>
-          <button id="ttsSource" class="icon-btn icon-btn--small tts-btn" title="Lire à voix haute" aria-label="Lire le texte source">
+          <button id="ttsSource" class="icon-btn icon-btn--small tts-btn" title="Read aloud" aria-label="Read source text">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
               <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
               <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
             </svg>
           </button>
-          <button id="fontSizeBtn" class="icon-btn icon-btn--small" title="Changer la taille du texte" aria-label="Changer la taille du texte" data-size="normal">
+          <button id="fontSizeBtn" class="icon-btn icon-btn--small" title="Change text size" aria-label="Change text size" data-size="normal">
             <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
               <path d="M3 18h5.5l1-2.5h3l1 2.5H19v-1.5l-4.5-11H9.5L5 16.5H3V18zm7.5-5l1-3 1 3h-2z" opacity=".5"/>
               <path d="M14 20h8v-1.5l-2-5h-4l-2 5V20zm3-4.5.8 2.5h-1.6l.8-2.5z"/>
@@ -214,10 +214,10 @@
       <div class="textarea-wrap">
         <textarea id="sourceText" maxlength="5000"
           placeholder="Saisissez ou glissez un fichier ici…"
-          aria-label="Texte à traduire" spellcheck="false"></textarea>
+          aria-label="Text to translate" spellcheck="false"></textarea>
         <div id="spellOverlay" class="spell-overlay" aria-hidden="true"></div>
-        <!-- Clear button — inline, contextuel -->
-        <button id="clearBtn" class="clear-inline-btn" title="Effacer (Ctrl+L)" aria-label="Effacer le texte">
+        <!-- Clear button — inline, contextual -->
+        <button id="clearBtn" class="clear-inline-btn" title="Clear (Ctrl+L)" aria-label="Clear text">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
@@ -226,7 +226,7 @@
 
       <div class="panel-footer">
         <span id="charCount" class="char-count">0 / 5000</span>
-        <!-- Spell status: now shows inline with "Corriger tout" button -->
+        <!-- Spell status: inline with fix-all button -->
         <div class="spell-footer-group">
           <button id="spellStatus" class="spell-status" type="button" aria-expanded="false" aria-controls="spellPanel"></button>
           <button id="fixAllBtn" class="fix-all-btn" style="display:none" title="Corriger toutes les erreurs automatiquement">
@@ -236,14 +236,14 @@
         </div>
       </div>
       <!-- Spell panel (expandable error list) -->
-      <div id="spellPanel" class="spell-panel" aria-hidden="true" role="region" aria-label="Liste des erreurs orthographiques"></div>
+      <div id="spellPanel" class="spell-panel" aria-hidden="true" role="region" aria-label="Spell check errors list"></div>
       <!-- Spell tooltip (bubble on hovered word) -->
       <div id="spellTooltip" class="spell-tooltip" role="tooltip"></div>
     </section>
 
-    <!-- ── Swap Button ── -->
+    <!-- Swap Button -->
     <div class="swap-wrap">
-      <button id="swapBtn" class="swap-btn" title="Inverser les langues (Ctrl+S)" aria-label="Inverser source et cible">
+      <button id="swapBtn" class="swap-btn" title="Swap languages (Ctrl+S)" aria-label="Swap source and target">
         <svg class="swap-icon-h" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
           <path d="M8 3L4 7l4 4M4 7h16"/><path d="M16 21l4-4-4-4M20 17H4"/>
         </svg>
@@ -253,10 +253,10 @@
       </button>
     </div>
 
-    <!-- ── Target Panel ── -->
+    <!-- Target Panel -->
     <section class="panel panel--target">
       <div class="panel-header" id="targetPanelHeader">
-        <select id="targetLang" aria-label="Langue cible">
+        <select id="targetLang" aria-label="Target language">
           <option value="en">🇬🇧 Anglais</option>
           <option value="fr">🇫🇷 Français</option>
           <option value="es">🇪🇸 Espagnol</option>
@@ -278,29 +278,29 @@
           <option value="id">🇮🇩 Indonésien</option>
         </select>
         <div class="panel-actions">
-          <!-- Keep Formatting toggle -->
-          <button id="formatToggle" class="icon-btn icon-btn--small" title="Conserver la mise en forme" aria-label="Conserver la mise en forme" aria-pressed="false">
+          <!-- Keep formatting toggle -->
+          <button id="formatToggle" class="icon-btn icon-btn--small" title="Keep formatting" aria-label="Keep formatting" aria-pressed="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <line x1="21" y1="6" x2="3" y2="6"/><line x1="15" y1="12" x2="3" y2="12"/><line x1="17" y1="18" x2="3" y2="18"/>
             </svg>
           </button>
-          <!-- TTS Target -->
-          <button id="ttsTarget" class="icon-btn icon-btn--small tts-btn" title="Lire la traduction" aria-label="Lire la traduction">
+          <!-- TTS target button -->
+          <button id="ttsTarget" class="icon-btn icon-btn--small tts-btn" title="Read translation" aria-label="Read translation">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
               <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
               <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
             </svg>
           </button>
-          <!-- Share -->
-          <button id="shareBtn" class="icon-btn icon-btn--small" title="Partager la traduction" aria-label="Partager la traduction">
+          <!-- Share button -->
+          <button id="shareBtn" class="icon-btn icon-btn--small" title="Share translation" aria-label="Share translation">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
               <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
             </svg>
           </button>
-          <!-- Copy -->
-          <button id="copyBtn" class="icon-btn icon-btn--small" title="Copier la traduction (Ctrl+Shift+C)" aria-label="Copier la traduction">
+          <!-- Copy button -->
+          <button id="copyBtn" class="icon-btn icon-btn--small" title="Copy translation (Ctrl+Shift+C)" aria-label="Copy translation">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
@@ -310,27 +310,27 @@
         </div>
       </div>
 
-      <!-- Barre de progression de traduction -->
+      <!-- Translation progress bar -->
       <div id="translProgress" class="transl-progress" aria-hidden="true"></div>
 
       <div id="loadingOverlay" class="loading-overlay" aria-hidden="true" aria-live="polite">
         <div class="spinner"></div>
-        <span data-i18n="translating">Traduction…</span>
+        <span data-i18n="translating">Translation…</span>
       </div>
 
-      <div id="targetText" class="target-output" role="status" aria-live="polite" aria-label="Texte traduit">
+      <div id="targetText" class="target-output" role="status" aria-live="polite" aria-label="Translated text">
         <span class="placeholder-hint" data-i18n="targetPlaceholder">La traduction apparaîtra ici…</span>
       </div>
 
 
-      <!-- ── Inline API compare (shown inside the target panel) ── -->
+      <!-- Inline API comparison panel (inside target panel) -->
       <div id="apiComparePanel" class="api-compare-inline" aria-hidden="true">
         <div class="api-compare-header">
           <span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="12" height="12" style="vertical-align:middle;margin-right:.3rem"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
             Comparaison des sources
           </span>
-          <button id="apiComparePanelClose" class="api-compare-close" aria-label="Fermer">✕</button>
+          <button id="apiComparePanelClose" class="api-compare-close" aria-label="Close">✕</button>
         </div>
         <div id="apiCompareBody" class="api-compare-body"></div>
       </div>
@@ -340,7 +340,7 @@
           <span id="apiBadge" class="api-badge"></span>
         </div>
         <span id="errorMsg" class="error-msg" role="alert" aria-live="assertive"></span>
-        <button id="favBtn" class="icon-btn icon-btn--small fav-btn" title="Ajouter aux favoris" aria-label="Ajouter aux favoris" aria-pressed="false" disabled>
+        <button id="favBtn" class="icon-btn icon-btn--small fav-btn" title="Add to favorites" aria-label="Add to favorites" aria-pressed="false" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
           </svg>
@@ -354,8 +354,8 @@
   <!-- ══════════════════════════════════════════
        HISTORY PANEL
   ══════════════════════════════════════════ -->
-  <aside id="historyPanel" class="history-panel" aria-hidden="true" role="dialog" aria-label="Historique des traductions">
-    <div class="history-tabs" role="tablist" aria-label="Onglets historique">
+  <aside id="historyPanel" class="history-panel" aria-hidden="true" role="dialog" aria-label="Translation history">
+    <div class="history-tabs" role="tablist" aria-label="History tabs">
       <button class="history-tab active" data-tab="history" role="tab" aria-selected="true" data-i18n="historyTabAll">Récent</button>
       <button class="history-tab" data-tab="favorites" role="tab" aria-selected="false" data-i18n="historyTabFav">⭐ Favoris</button>
     </div>
@@ -367,17 +367,17 @@
         <span id="historyTitle" data-i18n="historyTitle">10 dernières traductions</span>
       </h2>
       <div class="history-header-actions">
-        <button id="exportHistoryBtn" class="btn-text" aria-label="Exporter l'historique en JSON" title="Exporter en JSON">⬇ JSON</button>
-        <button id="exportCsvBtn" class="btn-text" aria-label="Exporter l'historique en CSV" title="Exporter en CSV">⬇ CSV</button>
-        <button id="clearHistoryBtn" class="btn-text" aria-label="Effacer l'historique" data-i18n="clearHistory">Tout effacer</button>
-        <button id="closeHistoryBtn" class="icon-btn" aria-label="Fermer l'historique">
+        <button id="exportHistoryBtn" class="btn-text" aria-label="Export history as JSON" title="Exporter en JSON">⬇ JSON</button>
+        <button id="exportCsvBtn" class="btn-text" aria-label="Export history as CSV" title="Exporter en CSV">⬇ CSV</button>
+        <button id="clearHistoryBtn" class="btn-text" aria-label="Clear history" data-i18n="clearHistory">Tout effacer</button>
+        <button id="closeHistoryBtn" class="icon-btn" aria-label="Close history">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
     </div>
-    <ul id="historyList" class="history-list" aria-label="Liste des traductions récentes"></ul>
+    <ul id="historyList" class="history-list" aria-label="Recent translations list"></ul>
     <p id="historyEmpty" class="history-empty" data-i18n="historyEmpty">Aucune traduction enregistrée.</p>
   </aside>
   <div id="historyBackdrop" class="history-backdrop" aria-hidden="true"></div>
@@ -393,9 +393,9 @@
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
-          <span data-i18n="settingsHeading">Paramètres</span>
+          <span data-i18n="settingsHeading">Settings</span>
         </h2>
-        <button id="closeSettingsBtn" class="icon-btn" aria-label="Fermer les paramètres">
+        <button id="closeSettingsBtn" class="icon-btn" aria-label="Close settings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
@@ -403,7 +403,7 @@
       </div>
 
       <div class="modal-body">
-        <!-- Interface Language -->
+        <!-- Interface language setting -->
         <div class="setting-group">
           <label class="setting-label" data-i18n="settingsLang">Langue de l'interface</label>
           <div class="setting-options" id="langOptions">
@@ -413,7 +413,7 @@
           </div>
         </div>
 
-        <!-- UI Theme Style -->
+        <!-- UI theme style setting -->
         <div class="setting-group">
           <label class="setting-label" data-i18n="settingsTheme">Style de l'interface</label>
           <div class="setting-options theme-grid" id="themeOptions">
@@ -448,7 +448,7 @@
           </div>
         </div>
 
-        <!-- Dark / Light / Auto mode -->
+        <!-- Dark / Light / Auto mode setting -->
         <div class="setting-group" id="darkModeGroup">
           <label class="setting-label" data-i18n="settingsDark">Mode sombre</label>
           <div class="setting-options" id="darkModeOptions">
@@ -458,7 +458,7 @@
           </div>
         </div>
 
-        <!-- Accent Color -->
+        <!-- Accent color setting -->
         <div class="setting-group">
           <label class="setting-label" data-i18n="settingsAccent">Couleur d'accentuation</label>
           <div class="setting-options" id="accentOptions">
@@ -480,7 +480,7 @@
           </div>
         </div>
 
-        <!-- Translation API -->
+        <!-- Translation API setting -->
         <div class="setting-group">
           <label class="setting-label" data-i18n="settingsApi">API de traduction</label>
           <div class="setting-options" id="apiOptions">
@@ -500,7 +500,7 @@
           <p class="setting-hint" data-i18n="settingsApiHint">En mode Auto, l'application essaie chaque service l'un après l'autre si le précédent échoue.</p>
         </div>
 
-        <!-- Comparaison des APIs -->
+        <!-- API comparison setting -->
         <div class="setting-group">
           <label class="setting-label">Comparaison des APIs</label>
           <div class="setting-options" id="compareApiOptions">
@@ -510,7 +510,7 @@
           <p class="setting-hint">Affiche les résultats des 3 sources côte à côte après chaque traduction pour choisir le meilleur.</p>
         </div>
 
-        <!-- Thème selon l'heure -->
+        <!-- Time-based theme setting -->
         <div class="setting-group">
           <label class="setting-label">Thème automatique selon l'heure</label>
           <div class="setting-options" id="autoTimeThemeOptions">
@@ -518,7 +518,7 @@
             <button class="opt-btn" data-timetheme="on">Actif</button>
           </div>
 
-          <!-- Slot configurator — visible only when enabled -->
+          <!-- Time slot configurator — visible only when enabled -->
           <div class="time-slots-config" id="timeSlotsConfig">
             <div class="time-slot-row">
               <label class="time-slot-label">
@@ -584,7 +584,7 @@
           </div>
         </div>
 
-        <!-- Retour haptique -->
+        <!-- Haptic feedback setting -->
         <div class="setting-group">
           <label class="setting-label">Retour haptique (mobile)</label>
           <div class="setting-options" id="hapticOptions">
@@ -604,14 +604,14 @@
   <div id="installBanner" class="install-banner" aria-hidden="true">
     <span data-i18n="installMsg">📲 Installer OpenTrad comme application</span>
     <button id="installBtn" class="btn-install" data-i18n="install">Installer</button>
-    <button id="dismissInstall" class="icon-btn icon-btn--small" aria-label="Fermer">
+    <button id="dismissInstall" class="icon-btn icon-btn--small" aria-label="Close">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
     </button>
   </div>
 
-  <!-- Connection Toast -->
+  <!-- Connection toast notification -->
   <div id="connToast" class="conn-toast" aria-live="assertive" aria-hidden="true">
     <span class="conn-toast-dot"></span>
     <span id="connToastMsg">Connecté</span>
@@ -620,11 +620,11 @@
   <!-- ══════════════════════════════════════════
        CONVERSATION MODE OVERLAY
   ══════════════════════════════════════════ -->
-  <div id="convOverlay" class="conv-overlay" aria-hidden="true" role="dialog" aria-label="Mode conversation">
-    <!-- Top half (rotated for person opposite) -->
+  <div id="convOverlay" class="conv-overlay" aria-hidden="true" role="dialog" aria-label="Conversation mode">
+    <!-- Top half (rotated 180° for person facing opposite) -->
     <div class="conv-half conv-half--top">
       <div class="conv-half-header">
-        <select id="convLangTop" class="conv-lang-select" aria-label="Langue personne du haut">
+        <select id="convLangTop" class="conv-lang-select" aria-label="Language for top person">
           <option value="fr">🇫🇷 Français</option>
           <option value="en">🇬🇧 Anglais</option>
           <option value="es">🇪🇸 Espagnol</option>
@@ -647,16 +647,16 @@
         </select>
       </div>
       <div id="convTextTop" class="conv-text">
-        <span class="conv-text-placeholder">Appuyez sur le micro et parlez…</span>
+        <span class="conv-text-placeholder">Tap the mic and speak…</span>
       </div>
       <div class="conv-half-actions">
-        <button id="convMicTop" class="conv-mic-btn" aria-label="Microphone personne du haut">
+        <button id="convMicTop" class="conv-mic-btn" aria-label="Microphone for top person">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
             <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
           </svg>
         </button>
-        <button id="convTtsTop" class="conv-tts-btn" aria-label="Lire le texte du haut">
+        <button id="convTtsTop" class="conv-tts-btn" aria-label="Read top text">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
             <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
@@ -665,13 +665,13 @@
       </div>
     </div>
 
-    <!-- Center bar -->
+    <!-- Center control bar -->
     <div class="conv-bar">
       <span id="convBarLangs" class="conv-bar-langs">FR ↔ EN</span>
       <div class="conv-bar-actions">
-        <button id="convSwapLangs" class="conv-action-btn">⇄ Inverser</button>
-        <button id="convClearBtn" class="conv-action-btn">✕ Effacer</button>
-        <button id="convCloseBtn" class="conv-close-btn" aria-label="Fermer le mode conversation">
+        <button id="convSwapLangs" class="conv-action-btn">⇄ Swap</button>
+        <button id="convClearBtn" class="conv-action-btn">✕ Clear</button>
+        <button id="convCloseBtn" class="conv-close-btn" aria-label="Close conversation mode">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
@@ -679,10 +679,10 @@
       </div>
     </div>
 
-    <!-- Bottom half (normal orientation) -->
+    <!-- Bottom half (normal reading orientation) -->
     <div class="conv-half conv-half--bottom">
       <div class="conv-half-header">
-        <select id="convLangBottom" class="conv-lang-select" aria-label="Langue personne du bas">
+        <select id="convLangBottom" class="conv-lang-select" aria-label="Language for bottom person">
           <option value="en">🇬🇧 Anglais</option>
           <option value="fr">🇫🇷 Français</option>
           <option value="es">🇪🇸 Espagnol</option>
@@ -703,24 +703,24 @@
           <option value="vi">🇻🇳 Vietnamien</option>
           <option value="id">🇮🇩 Indonésien</option>
         </select>
-        <!-- Mobile-only close button on bottom half for easy reach -->
-        <button class="conv-close-mobile" id="convCloseMobile" aria-label="Fermer le mode conversation">
+        <!-- Mobile-only close button on bottom half for easy thumb reach -->
+        <button class="conv-close-mobile" id="convCloseMobile" aria-label="Close conversation mode">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
       <div id="convTextBottom" class="conv-text">
-        <span class="conv-text-placeholder">Appuyez sur le micro et parlez…</span>
+        <span class="conv-text-placeholder">Tap the mic and speak…</span>
       </div>
       <div class="conv-half-actions">
-        <button id="convMicBottom" class="conv-mic-btn" aria-label="Microphone personne du bas">
+        <button id="convMicBottom" class="conv-mic-btn" aria-label="Microphone for bottom person">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
             <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
           </svg>
         </button>
-        <button id="convTtsBottom" class="conv-tts-btn" aria-label="Lire le texte du bas">
+        <button id="convTtsBottom" class="conv-tts-btn" aria-label="Read bottom text">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
             <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
@@ -733,61 +733,61 @@
   <!-- ══════════════════════════════════════════
        KEYBOARD SHORTCUTS HELP
   ══════════════════════════════════════════ -->
-  <div id="kbHelpOverlay" class="kb-help-overlay" aria-hidden="true" role="dialog" aria-label="Raccourcis clavier">
+  <div id="kbHelpOverlay" class="kb-help-overlay" aria-hidden="true" role="dialog" aria-label="Keyboard shortcuts">
     <div class="kb-help-box">
       <div class="kb-help-title">
-        ⌨ Raccourcis clavier
-        <button id="kbHelpClose" class="kb-help-close" aria-label="Fermer">✕</button>
+        ⌨ Keyboard Shortcuts
+        <button id="kbHelpClose" class="kb-help-close" aria-label="Close">✕</button>
       </div>
 
-      <div class="kb-group-title">Traduction</div>
-      <div class="kb-row"><span>Lancer la traduction</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>Enter</kbd></span></div>
-      <div class="kb-row"><span>Inverser les langues</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>S</kbd></span></div>
-      <div class="kb-row"><span>Effacer le texte</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>L</kbd></span></div>
-      <div class="kb-row"><span>Copier la traduction</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>C</kbd></span></div>
+      <div class="kb-group-title">Translation</div>
+      <div class="kb-row"><span>Trigger translation</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>Enter</kbd></span></div>
+      <div class="kb-row"><span>Swap languages</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>S</kbd></span></div>
+      <div class="kb-row"><span>Clear text</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>L</kbd></span></div>
+      <div class="kb-row"><span>Copy translation</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>C</kbd></span></div>
 
       <div class="kb-group-title">Interface</div>
-      <div class="kb-row"><span>Historique</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>H</kbd></span></div>
-      <div class="kb-row"><span>Paramètres</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>,</kbd></span></div>
-      <div class="kb-row"><span>Mode concentration</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>K</kbd></span></div>
-      <div class="kb-row"><span>Mode conversation</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>V</kbd></span></div>
-      <div class="kb-row"><span>Fermer / Annuler</span><span class="kb-keys"><kbd>Esc</kbd></span></div>
+      <div class="kb-row"><span>History</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>H</kbd></span></div>
+      <div class="kb-row"><span>Settings</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>,</kbd></span></div>
+      <div class="kb-row"><span>Focus mode</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>K</kbd></span></div>
+      <div class="kb-row"><span>Conversation mode</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>V</kbd></span></div>
+      <div class="kb-row"><span>Close / Cancel</span><span class="kb-keys"><kbd>Esc</kbd></span></div>
 
-      <div class="kb-group-title">Mise en forme</div>
-      <div class="kb-row"><span>Gras (résultat)</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>B</kbd></span></div>
-      <div class="kb-row"><span>Souligner (résultat)</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>U</kbd></span></div>
+      <div class="kb-group-title">Formatting</div>
+      <div class="kb-row"><span>Bold (result)</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>B</kbd></span></div>
+      <div class="kb-row"><span>Underline (result)</span><span class="kb-keys"><kbd>Ctrl</kbd><kbd>U</kbd></span></div>
 
-      <div class="kb-group-title">Aide</div>
-      <div class="kb-row"><span>Afficher cette aide</span><span class="kb-keys"><kbd>?</kbd></span></div>
+      <div class="kb-group-title">Help</div>
+      <div class="kb-row"><span>Show this help</span><span class="kb-keys"><kbd>?</kbd></span></div>
     </div>
   </div>
 
-  <!-- Shortcut action toast -->
+  <!-- Shortcut action toast notification -->
   <div id="shortcutToast" class="shortcut-toast" aria-live="polite"></div>
 
   <!-- ══════════════════════════════════════════
-       BARRE MOBILE BASSE
+       MOBILE BOTTOM ACTION BAR
   ══════════════════════════════════════════ -->
   <div class="mobile-bottom-bar" id="mobileBottomBar">
-    <button class="mobile-bar-btn" id="mobileSwapBtn" title="Inverser les langues" aria-label="Inverser les langues">
+    <button class="mobile-bar-btn" id="mobileSwapBtn" title="Swap languages" aria-label="Swap languages">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
         <path d="M8 3L4 7l4 4M4 7h16"/><path d="M16 21l4-4-4-4M20 17H4"/>
       </svg>
-      <span>Inverser</span>
+      <span>Swap</span>
     </button>
-    <button class="mobile-bar-btn" id="mobileCopyBtn" title="Copier la traduction" aria-label="Copier la traduction">
+    <button class="mobile-bar-btn" id="mobileCopyBtn" title="Copy translation" aria-label="Copy translation">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
       </svg>
-      <span>Copier</span>
+      <span>Copy</span>
     </button>
-    <button class="mobile-bar-btn" id="mobileShareBtn" title="Partager la traduction" aria-label="Partager la traduction">
+    <button class="mobile-bar-btn" id="mobileShareBtn" title="Share translation" aria-label="Share translation">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
         <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
       </svg>
-      <span>Partager</span>
+      <span>Share</span>
     </button>
   </div>
 

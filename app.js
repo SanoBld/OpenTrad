@@ -654,7 +654,7 @@ function showBadge(api) {
   const classes = { google: "badge-google", mymemory: "badge-mymemory", libre: "badge-libre" };
   apiBadge.className = "api-badge";
   const stars = API_CONFIDENCE[api] || "";
-  apiBadge.innerHTML = `${labels[api] || api} <span class="api-confidence" title="Qualité estimée de la source">${stars}</span>`;
+  apiBadge.innerHTML = `${labels[api] || api} <span class="api-confidence" title="Estimated source quality">${stars}</span>`;
   apiBadge.classList.add(classes[api] || "", "visible");
 }
 function hideBadge() { apiBadge.classList.remove("visible"); }
@@ -1075,7 +1075,7 @@ sourceText.addEventListener("keydown", (e) => {
     e.preventDefault();
     clearTimeout(debounceTimer);
     translate();
-    showShortcutToast("⟳ Traduction lancée");
+    showShortcutToast("⟳ Translation started");
   }
 });
 
@@ -1109,7 +1109,7 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     clearTimeout(debounceTimer);
     translate();
-    showShortcutToast("⟳ Traduction lancée");
+    showShortcutToast("⟳ Translation started");
     return;
   }
 
@@ -2510,7 +2510,7 @@ function startConvRec(side) {
 
     // Translate final result
     if (final.trim()) {
-      outputEl.innerHTML = `<span class="conv-text-placeholder">Traduction…</span>`;
+      outputEl.innerHTML = `<span class="conv-text-placeholder">Translating…</span>`;
       const result = await translateConv(final.trim(), lang, toLang);
       if (result) {
         renderConvText(side === "top" ? "bottom" : "top", result);
@@ -2579,3 +2579,124 @@ async function translateChunked(text, from, to, prefs) {
   }
   return { result: combined || null, apiUsed };
 }
+
+/* ----------------------------------------------------------
+   MOBILE BOTTOM BAR — Wire up mobile action buttons
+   These mirror the desktop panel buttons for easy thumb reach.
+---------------------------------------------------------- */
+(function initMobileBar() {
+  const mobileSwapBtn  = document.getElementById("mobileSwapBtn");
+  const mobileCopyBtn  = document.getElementById("mobileCopyBtn");
+  const mobileShareBtn = document.getElementById("mobileShareBtn");
+
+  if (!mobileSwapBtn || !mobileCopyBtn || !mobileShareBtn) return;
+
+  // Swap button mirrors the main swap button
+  mobileSwapBtn.addEventListener("click", () => {
+    if (swapBtn) swapBtn.click();
+    triggerHaptic();
+  });
+
+  // Copy button mirrors the main copy button
+  mobileCopyBtn.addEventListener("click", async () => {
+    const text = targetText.textContent.trim();
+    if (!text || text === (I18N[getPrefs().lang]?.targetPlaceholder || "")) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      mobileCopyBtn.classList.add("copy-success");
+      setTimeout(() => mobileCopyBtn.classList.remove("copy-success"), 1800);
+      triggerHaptic();
+    } catch {
+      // Fallback for browsers without clipboard API
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;opacity:0;top:0;left:0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch {}
+      document.body.removeChild(ta);
+    }
+  });
+
+  // Share button mirrors the main share button
+  mobileShareBtn.addEventListener("click", () => {
+    if (shareBtn) shareBtn.click();
+    triggerHaptic();
+  });
+})();
+
+/* ----------------------------------------------------------
+   HAPTIC FEEDBACK — Vibrate on key interactions (mobile)
+   Only fires if haptic preference is enabled.
+---------------------------------------------------------- */
+function triggerHaptic(pattern = [10]) {
+  try {
+    const prefs = getPrefs();
+    if (prefs.haptic === "off") return;
+    if ("vibrate" in navigator) navigator.vibrate(pattern);
+  } catch { /* Ignore if vibration API unavailable */ }
+}
+
+/* ----------------------------------------------------------
+   iOS SCROLL FIX — Prevent body scroll behind modals/panels
+   Locks body scroll when a modal or slide-in panel is open.
+---------------------------------------------------------- */
+(function initScrollLock() {
+  let scrollY = 0;
+
+  function lockScroll() {
+    scrollY = window.scrollY;
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+  }
+
+  function unlockScroll() {
+    document.body.style.overflow = "";
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.width = "";
+    window.scrollTo(0, scrollY);
+  }
+
+  // Observe modal/panel open states via class mutation
+  const settingsModal = document.getElementById("settingsModal");
+  const historyPanel  = document.getElementById("historyPanel");
+  const convOverlay   = document.getElementById("convOverlay");
+
+  const observer = new MutationObserver(() => {
+    const isOpen =
+      settingsModal?.classList.contains("open") ||
+      historyPanel?.classList.contains("open") ||
+      convOverlay?.classList.contains("open");
+
+    if (isOpen) lockScroll();
+    else unlockScroll();
+  });
+
+  [settingsModal, historyPanel, convOverlay].forEach(el => {
+    if (el) observer.observe(el, { attributes: true, attributeFilter: ["class"] });
+  });
+})();
+
+/* ----------------------------------------------------------
+   MOBILE — Auto-dismiss hero section on first translation
+   Saves vertical space on small screens.
+---------------------------------------------------------- */
+(function initHeroAutoDismiss() {
+  const hero = document.getElementById("heroSection");
+  if (!hero) return;
+
+  // Dismiss hero after the first character is typed
+  const src = document.getElementById("sourceText");
+  if (src) {
+    src.addEventListener("input", function onFirstInput() {
+      if (window.innerWidth <= 700 && src.value.length > 0) {
+        hero.classList.add("dismissed");
+        src.removeEventListener("input", onFirstInput);
+      }
+    }, { once: false });
+  }
+})();
+
