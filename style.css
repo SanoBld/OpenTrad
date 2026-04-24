@@ -1523,7 +1523,6 @@ body.focus-mode .target-output { min-height: 340px; }
   transition: grid-template-columns .35s cubic-bezier(.4,0,.2,1);
 }
 
-
 /* ──────────────────────────────────────────
    28. PANELS
 ────────────────────────────────────────── */
@@ -1746,7 +1745,6 @@ body {
 body.history-open {
   padding-right: min(400px, 95vw);
 }
-
 
 .history-tabs {
   display: flex; flex-shrink: 0;
@@ -2081,7 +2079,6 @@ body.history-open {
 }
 .spell-fix-btn:hover { filter: brightness(1.18); transform: translateY(-1px); }
 
-
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -2212,7 +2209,6 @@ body.history-open {
   filter: blur(0px);
 }
 
-
 /* Loading spinner for lang discovery */
 .lang-loading-badge {
   font-size: .65rem;
@@ -2220,7 +2216,6 @@ body.history-open {
   font-style: italic;
   padding: 0 .3rem;
 }
-
 
 /* Retry button inside error message */
 .retry-btn {
@@ -2263,7 +2258,6 @@ body.history-open {
 
 /* Conv mode button in header */
 
-
 /* ─── Keyboard Shortcuts Help ─── */
 
 .kb-help-overlay.open {
@@ -2304,7 +2298,6 @@ kbd {
   color: var(--text);
   box-shadow: 0 1px 0 var(--border);
 }
-
 
 /* ─── Shortcut toast (brief feedback) ─── */
 .shortcut-toast {
@@ -2401,7 +2394,6 @@ kbd {
 ══════════════════════════════════════════════════════════════ */
 
 /* The top half is rotated 180°, so the header sits at visual bottom */
-
 
 /* ══════════════════════════════════════════════════════════════
    MATERIAL YOU — color-mix() pour le thème par défaut (sans accent)
@@ -2758,13 +2750,7 @@ kbd {
 ══════════════════════════════════════════════════════════════ */
 
 /* ── API Confidence stars in badge ──────────────────────────── */
-.api-confidence {
-  font-size: .62rem;
-  letter-spacing: .04em;
-  margin-left: .35rem;
-  opacity: .75;
-  color: inherit;
-}
+
 
 /* ── Pin button in history item ─────────────────────────────── */
 .history-item-actions {
@@ -2773,26 +2759,6 @@ kbd {
   align-items: center;
   gap: .2rem;
   flex-shrink: 0;
-}
-.pin-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: .85rem;
-  line-height: 1;
-  padding: .15rem .25rem;
-  border-radius: 4px;
-  opacity: .3;
-  transition: opacity .18s, transform .18s;
-}
-.pin-btn:hover    { opacity: .8; transform: rotate(-20deg); }
-.pin-btn.pinned   { opacity: 1; }
-.history-item.pinned {
-  border-left: 3px solid var(--accent);
-}
-.pin-badge {
-  font-size: .72rem;
-  margin-right: .2rem;
 }
 
 /* ── API Comparison Panel ───────────────────────────────────── */
@@ -2918,23 +2884,13 @@ kbd {
   opacity: 1;
 }
 
-
 /* ══════════════════════════════════════════════════════════════
    NEW FEATURES CSS
 ══════════════════════════════════════════════════════════════ */
 
 /* ─── API Confidence Stars ─── */
-.api-confidence {
-  font-size: .62rem;
-  letter-spacing: .05em;
-  margin-left: .35rem;
-  opacity: .75;
-  font-family: var(--font-mono, monospace);
-  vertical-align: middle;
-}
-.api-badge .api-confidence {
-  color: inherit;
-}
+
+.api-badge 
 
 /* ─── API Comparison — inline in target panel ─── */
 .api-compare-inline {
@@ -3065,27 +3021,6 @@ kbd {
   align-items: center;
   gap: .3rem;
   flex-shrink: 0;
-}
-.pin-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: .9rem;
-  line-height: 1;
-  opacity: .35;
-  padding: .15rem .2rem;
-  border-radius: 4px;
-  transition: opacity .18s ease, transform .18s ease;
-}
-.pin-btn:hover { opacity: .8; transform: scale(1.15); }
-.pin-btn.pinned { opacity: 1; filter: saturate(1.5); }
-.history-item.pinned {
-  border-left: 3px solid var(--accent);
-}
-.pin-badge {
-  font-size: .7rem;
-  vertical-align: middle;
-  margin-right: .2rem;
 }
 
 /* ─── Export CSV btn — same style as JSON export ─── */
@@ -3408,7 +3343,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .panel-header { border-bottom: 1px solid var(--border) !important; }
 .panel--target { overflow: hidden !important; position: relative; }
 .loading-overlay { border-radius: 0 0 var(--radius) var(--radius) !important; }
-.api-compare-inline { margin: 0; border-top: 1px solid var(--border); border-radius: 0 0 var(--radius) var(--radius); overflow: hidden; }
+.api-compare-inline:not(.open) { display: none !important; }
 .spell-panel { border-radius: 0 !important; margin: 0 !important; width: 100% !important; }
 .clear-inline-btn { position: absolute; top: .6rem; right: .6rem; z-index: 5; width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--bg-panel-alt); color: var(--text-muted); cursor: pointer; display: none; align-items: center; justify-content: center; transition: background var(--transition), color var(--transition); flex-shrink: 0; }
 .clear-inline-btn svg { width: 13px; height: 13px; }
@@ -3531,4 +3466,233 @@ kbd {
   box-shadow: 0 1px 0 var(--border);
   white-space: nowrap;
   line-height: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   OPENTRAD — PATCH v3.2
+   Mobile bar redesign · Swap centering · Compact layout · Hero toggle
+═══════════════════════════════════════════════════════════════ */
+
+/* ──────────────────────────────────────────
+   MOBILE BOTTOM BAR — full redesign
+   4 buttons: History | Swap (prominent) | Copy | Settings
+────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .mobile-bottom-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 800;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: .45rem .5rem calc(.45rem + env(safe-area-inset-bottom));
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -8px 28px rgba(0,0,0,.13);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    gap: .25rem;
+  }
+
+  .mobile-bar-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .22rem;
+    padding: .45rem .3rem .35rem;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: .6rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+    min-width: 48px;
+    min-height: 52px;
+    transition: background .15s, color .15s, transform .1s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .mobile-bar-btn svg {
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+  }
+  .mobile-bar-btn:active {
+    transform: scale(.92);
+    background: var(--bg-panel-alt);
+  }
+  .mobile-bar-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Swap — centre, larger, accent pill */
+  .mobile-bar-btn--swap {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-radius: 16px;
+    min-width: 58px;
+    min-height: 58px;
+    padding: .5rem .4rem;
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--accent) 50%, transparent);
+    flex: 0 0 auto;
+  }
+  .mobile-bar-btn--swap svg {
+    width: 24px;
+    height: 24px;
+  }
+  .mobile-bar-btn--swap:active {
+    transform: scale(.9) rotate(180deg);
+    transition: transform .3s ease;
+  }
+
+  /* Copy success state */
+  .mobile-bar-btn.copy-success {
+    color: #22c55e !important;
+  }
+}
+
+/* ──────────────────────────────────────────
+   SWAP BUTTON — centred on mobile (override patch padding)
+────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .swap-wrap {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: .35rem 0 !important;
+    width: 100% !important;
+  }
+
+  /* The inline swap button in the translator layout */
+  .swap-btn {
+    margin: 0 auto;
+    display: flex;
+  }
+}
+
+/* ──────────────────────────────────────────
+   COMPACT LAYOUT — no scrolling needed
+   Hero is hidden by default on mobile;
+   panels fill the viewport cleanly.
+────────────────────────────────────────── */
+@media (max-width: 700px) {
+  /* Make the app fill viewport height */
+  body {
+    min-height: 100dvh;
+  }
+  .translator-wrap {
+    /* panels fill remaining height after header */
+    flex: 1;
+  }
+
+  /* Source textarea: fills available space */
+  #sourceText {
+    min-height: 150px !important;
+    max-height: 35dvh;
+    resize: none;
+  }
+
+  /* Target output: fills remaining space */
+  .target-output {
+    min-height: 140px !important;
+    max-height: 35dvh;
+  }
+
+  /* Panel: don't add extra padding */
+  .panel {
+    flex-shrink: 0;
+  }
+
+  /* If hero is visible, make it very compact */
+  .hero:not(.dismissed) {
+    padding: .6rem .75rem .4rem !important;
+  }
+  .hero-title {
+    font-size: clamp(1.3rem, 6vw, 1.8rem) !important;
+    margin: 0 !important;
+  }
+  .hero-dismiss-hint {
+    font-size: .65rem;
+  }
+}
+
+/* ──────────────────────────────────────────
+   DESKTOP — compact hero subtitle
+────────────────────────────────────────── */
+.hero.dismissed {
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+
+/* ──────────────────────────────────────────
+   HERO HIDDEN — keep panels vertically centred
+   When hero is dismissed, the translator-wrap
+   expands to fill the remaining viewport height
+   and centres the panels.
+────────────────────────────────────────── */
+
+/* Body becomes a flex column so the translator can grow */
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Site header stays at top, never grows */
+.site-header {
+  flex-shrink: 0;
+}
+
+/* The main content area fills remaining space */
+main.translator-wrap,
+.translator-wrap {
+  flex: 1;           /* grows to fill space */
+  align-self: stretch;
+}
+
+/* Default: panels aligned to start (hero pushes them down naturally) */
+.translator-wrap {
+  align-items: start;
+}
+
+/* When hero is gone: vertically centre the panels */
+body:has(.hero.dismissed) .translator-wrap {
+  align-items: center;  /* vertical centering for the grid rows */
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+/* Also reduce top margin since hero space is collapsed */
+body:has(.hero.dismissed) .translator-wrap {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+/* The hero collapse: fully remove space when dismissed */
+.hero.dismissed {
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Mobile: same centring behaviour */
+@media (max-width: 700px) {
+  body:has(.hero.dismissed) .translator-wrap {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
 }

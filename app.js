@@ -434,6 +434,20 @@ function syncSettingsUI() {
   document.querySelectorAll("#autoTimeThemeOptions .opt-btn").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.timetheme === timeTheme);
   });
+
+  // Hero banner
+  const heroBanner = prefs.heroBanner || "show";
+  document.querySelectorAll("#heroOptions .opt-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.hero === heroBanner);
+  });
+  const heroSection = document.getElementById("heroSection");
+  if (heroSection) heroSection.classList.toggle("dismissed", heroBanner === "hide");
+
+  // Rich copy
+  const richcopy = prefs.richcopy || "off";
+  document.querySelectorAll("#richCopyOptions .opt-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.richcopy === richcopy);
+  });
 }
 
 /** Language picker */
@@ -508,6 +522,22 @@ document.getElementById("autoTimeThemeOptions")?.addEventListener("click", (e) =
   savePrefs({ autoTimeTheme: btn.dataset.timetheme });
   syncSettingsUI();
   if (btn.dataset.timetheme === "on") applyTimeBasedTheme();
+});
+
+/** Hero banner picker */
+document.getElementById("heroOptions")?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".opt-btn[data-hero]");
+  if (!btn) return;
+  savePrefs({ heroBanner: btn.dataset.hero });
+  syncSettingsUI();
+});
+
+/** Rich copy picker */
+document.getElementById("richCopyOptions")?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".opt-btn[data-richcopy]");
+  if (!btn) return;
+  savePrefs({ richcopy: btn.dataset.richcopy });
+  syncSettingsUI();
 });
 
 /* ----------------------------------------------------------
@@ -648,13 +678,11 @@ function showError(msg, withRetry = false) {
 }
 function clearError()   { errorMsg.textContent = ""; }
 
-const API_CONFIDENCE = { google: "★★★", mymemory: "★★☆", libre: "★☆☆" };
 function showBadge(api) {
   const labels  = { google: "✦ Google", mymemory: "✦ MyMemory", libre: "✦ LibreTranslate" };
   const classes = { google: "badge-google", mymemory: "badge-mymemory", libre: "badge-libre" };
   apiBadge.className = "api-badge";
-  const stars = API_CONFIDENCE[api] || "";
-  apiBadge.innerHTML = `${labels[api] || api} <span class="api-confidence" title="Estimated source quality">${stars}</span>`;
+  apiBadge.innerHTML = labels[api] || api;
   apiBadge.classList.add(classes[api] || "", "visible");
 }
 function hideBadge() { apiBadge.classList.remove("visible"); }
@@ -1203,16 +1231,10 @@ function saveToHistory(source, target, fromLang, toLang) {
     fromLang, toLang,
     date: new Date().toISOString(),
     starred: false,
-    pinned: false,
   };
   history.unshift(entry);
-  // Preserve pinned — only count non-pinned towards the limit
-  const nonPinned = history.filter(h => !h.pinned);
-  if (nonPinned.length > HISTORY_MAX) {
-    let removed = 0;
-    for (let i = history.length - 1; i >= 0 && removed < nonPinned.length - HISTORY_MAX; i--) {
-      if (!history[i].pinned) { history.splice(i, 1); removed++; }
-    }
+  if (history.length > HISTORY_MAX) {
+    history.splice(HISTORY_MAX);
   }
   saveHistory(history);
 }
@@ -1221,12 +1243,6 @@ function toggleStar(id) {
   const history = loadHistory();
   const item = history.find(h => h.id === id);
   if (item) { item.starred = !item.starred; saveHistory(history); renderHistory(); }
-}
-
-function togglePin(id) {
-  const history = loadHistory();
-  const item = history.find(h => h.id === id);
-  if (item) { item.pinned = !item.pinned; saveHistory(history); renderHistory(); }
 }
 
 /* ── Fav button (target panel footer) ── */
@@ -1311,13 +1327,10 @@ function renderHistory() {
     li.setAttribute("role", "button");
     li.setAttribute("tabindex", "0");
     li.setAttribute("aria-label", `Recharger : ${item.source}`);
-
-    if (item.pinned) li.classList.add("pinned");
     li.innerHTML = `
       <div class="history-item-top">
         <div style="min-width:0;flex:1">
           <div class="history-langs">
-            ${item.pinned ? '<span class="pin-badge" title="Épinglé">📌</span>' : ""}
             <span>${langName(item.fromLang)}</span>
             <span class="arrow">→</span>
             <span>${langName(item.toLang)}</span>
@@ -1327,10 +1340,6 @@ function renderHistory() {
           <div class="history-time">${timeAgo(item.date)}</div>
         </div>
         <div class="history-item-actions">
-          <button class="pin-btn ${item.pinned ? "pinned" : ""}" data-id="${item.id}"
-            title="${item.pinned ? "Désépingler" : "Épingler (ne sera pas supprimé)"}" aria-label="Épingler">
-            📌
-          </button>
           <button class="star-btn ${item.starred ? "starred" : ""}" data-id="${item.id}"
             title="${item.starred ? "Retirer des favoris" : "Ajouter aux favoris"}" aria-label="Favori">
             ${item.starred ? "★" : "☆"}
@@ -1338,12 +1347,6 @@ function renderHistory() {
         </div>
       </div>
     `;
-
-    const pinButton  = li.querySelector(".pin-btn");
-    if (pinButton) pinButton.addEventListener("click", (e) => {
-      e.stopPropagation();
-      togglePin(item.id);
-    });
     const starButton = li.querySelector(".star-btn");
     starButton.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1390,8 +1393,7 @@ historyBackdrop.addEventListener("click", closeHistory);
 
 clearHistoryBtn.addEventListener("click", () => {
   const history = loadHistory();
-  const pinned = history.filter(h => h.pinned);
-  saveHistory(pinned); // keep pinned, remove rest
+  saveHistory([]); // clear all history
   renderHistory();
 });
 
@@ -1870,7 +1872,7 @@ exportHistoryBtn.addEventListener("click", () => {
 document.getElementById("exportCsvBtn")?.addEventListener("click", () => {
   const history = loadHistory();
   if (history.length === 0) return;
-  const header = ["id","date","fromLang","toLang","source","target","starred","pinned"];
+  const header = ["id","date","fromLang","toLang","source","target","starred"];
   const rows   = history.map(h => header.map(k => {
     const v = String(h[k] ?? "");
     return `"${v.replace(/"/g,'\'\'')}"`;
@@ -2026,9 +2028,9 @@ function closeApiCompare() {
 async function showApiComparison(text, from, to, primaryResult, primaryApi) {
   if (!apiComparePanel || !apiCompareBody) return;
   const apis = [
-    { key: "google",   fn: translateGoogle,   label: "✦ Google",         stars: "★★★" },
-    { key: "mymemory", fn: translateMyMemory,  label: "✦ MyMemory",       stars: "★★☆" },
-    { key: "libre",    fn: translateLibre,     label: "✦ LibreTranslate", stars: "★☆☆" },
+    { key: "google",   fn: translateGoogle,   label: "✦ Google" },
+    { key: "mymemory", fn: translateMyMemory,  label: "✦ MyMemory" },
+    { key: "libre",    fn: translateLibre,     label: "✦ LibreTranslate" },
   ];
 
   apiCompareBody.innerHTML = '<p class="compare-loading">Interrogation des sources…</p>';
@@ -2343,58 +2345,9 @@ async function translateChunked(text, from, to, prefs) {
    MOBILE BOTTOM BAR — Wire up mobile action buttons
    These mirror the desktop panel buttons for easy thumb reach.
 ---------------------------------------------------------- */
-(function initMobileBar() {
-  const mobileSwapBtn  = document.getElementById("mobileSwapBtn");
-  const mobileCopyBtn  = document.getElementById("mobileCopyBtn");
-  const mobileShareBtn = document.getElementById("mobileShareBtn");
 
-  if (!mobileSwapBtn || !mobileCopyBtn || !mobileShareBtn) return;
 
-  // Swap button mirrors the main swap button
-  mobileSwapBtn.addEventListener("click", () => {
-    if (swapBtn) swapBtn.click();
-    triggerHaptic();
-  });
 
-  // Copy button mirrors the main copy button
-  mobileCopyBtn.addEventListener("click", async () => {
-    const text = targetText.textContent.trim();
-    if (!text || text === (I18N[getPrefs().lang]?.targetPlaceholder || "")) return;
-    try {
-      await navigator.clipboard.writeText(text);
-      mobileCopyBtn.classList.add("copy-success");
-      setTimeout(() => mobileCopyBtn.classList.remove("copy-success"), 1800);
-      triggerHaptic();
-    } catch {
-      // Fallback for browsers without clipboard API
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.cssText = "position:fixed;opacity:0;top:0;left:0";
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand("copy"); } catch {}
-      document.body.removeChild(ta);
-    }
-  });
-
-  // Share button mirrors the main share button
-  mobileShareBtn.addEventListener("click", () => {
-    if (shareBtn) shareBtn.click();
-    triggerHaptic();
-  });
-})();
-
-/* ----------------------------------------------------------
-   HAPTIC FEEDBACK — Vibrate on key interactions (mobile)
-   Only fires if haptic preference is enabled.
----------------------------------------------------------- */
-function triggerHaptic(pattern = [10]) {
-  try {
-    const prefs = getPrefs();
-    if (prefs.haptic === "off") return;
-    if ("vibrate" in navigator) navigator.vibrate(pattern);
-  } catch { /* Ignore if vibration API unavailable */ }
-}
 
 /* ----------------------------------------------------------
    iOS SCROLL FIX — Prevent body scroll behind modals/panels
@@ -2457,3 +2410,132 @@ function triggerHaptic(pattern = [10]) {
   }
 })();
 
+
+/* ----------------------------------------------------------
+   MOBILE BOTTOM BAR — Wire up all 4 action buttons
+   Runs after DOM is ready; all referenced functions exist.
+---------------------------------------------------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  const mobileSwapBtn     = document.getElementById("mobileSwapBtn");
+  const mobileCopyBtn     = document.getElementById("mobileCopyBtn");
+  const mobileHistoryBtn  = document.getElementById("mobileHistoryBtn");
+  const mobileSettingsBtn = document.getElementById("mobileSettingsBtn");
+
+  // Swap — trigger the main swap button animation
+  mobileSwapBtn?.addEventListener("click", () => {
+    swapBtn?.click();
+    haptic(10);
+  });
+
+  // Copy — write plain or rich text to clipboard
+  mobileCopyBtn?.addEventListener("click", async () => {
+    const prefs = loadPrefs();
+    const t     = I18N[prefs.lang || "fr"] || I18N.fr;
+    const rawText = targetText.textContent.trim();
+    if (!rawText || rawText === t.targetPlaceholder) return;
+
+    try {
+      if (prefs.richcopy === "on" && targetText.innerHTML) {
+        const html = targetText.innerHTML;
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html":  new Blob([html],    { type: "text/html" }),
+            "text/plain": new Blob([rawText], { type: "text/plain" }),
+          })
+        ]);
+      } else {
+        await navigator.clipboard.writeText(rawText);
+      }
+      mobileCopyBtn.classList.add("copy-success");
+      setTimeout(() => mobileCopyBtn.classList.remove("copy-success"), 1800);
+      haptic(15);
+    } catch {
+      // Fallback
+      const ta = document.createElement("textarea");
+      ta.value = rawText;
+      ta.style.cssText = "position:fixed;opacity:0;top:0;left:0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch {}
+      document.body.removeChild(ta);
+    }
+  });
+
+  // History — open history panel
+  mobileHistoryBtn?.addEventListener("click", () => {
+    openHistory();
+    haptic(10);
+  });
+
+  // Settings — open settings modal
+  mobileSettingsBtn?.addEventListener("click", () => {
+    openSettings();
+    haptic(10);
+  });
+});
+
+/* ----------------------------------------------------------
+   COPY BUTTON — upgrade to rich copy when pref is ON
+   Patches the existing copyBtn listener to support HTML copy.
+---------------------------------------------------------- */
+(function patchCopyBtn() {
+  if (!copyBtn) return;
+  copyBtn.addEventListener("click", async (e) => {
+    // Only intercept if rich copy is on
+    const prefs = loadPrefs();
+    if (prefs.richcopy !== "on") return; // let original handler run
+    e.stopImmediatePropagation();
+
+    const t       = I18N[prefs.lang || "fr"] || I18N.fr;
+    const rawText = targetText.textContent.trim();
+    if (!rawText || rawText === t.targetPlaceholder) return;
+
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html":  new Blob([targetText.innerHTML], { type: "text/html" }),
+          "text/plain": new Blob([rawText],              { type: "text/plain" }),
+        })
+      ]);
+      const svg = copyBtn.querySelector("svg");
+      if (svg) svg.innerHTML = CHECK_ICON_SVG;
+      copyBtn.classList.add("copy-success");
+      copyTooltip?.classList.add("visible");
+      haptic(15);
+      setTimeout(() => {
+        copyTooltip?.classList.remove("visible");
+        copyBtn.classList.remove("copy-success");
+        if (svg) svg.innerHTML = COPY_ICON_SVG;
+      }, 1800);
+    } catch {
+      // ClipboardItem not supported — fall through to plain text
+    }
+  }, true); // capture phase so it runs first
+})();
+
+/* ----------------------------------------------------------
+   iOS SCROLL FIX — lock body when modal/panel is open
+---------------------------------------------------------- */
+(function initScrollLock() {
+  let scrollY = 0;
+  function lockScroll() {
+    scrollY = window.scrollY;
+    document.body.style.cssText += ";overflow:hidden;position:fixed;top:-" + scrollY + "px;width:100%";
+  }
+  function unlockScroll() {
+    document.body.style.overflow = "";
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.width = "";
+    window.scrollTo(0, scrollY);
+  }
+  const observe = (el) => {
+    if (!el) return;
+    new MutationObserver(() => {
+      const anyOpen = [settingsModal, historyPanel].some(p => p?.classList.contains("open"));
+      anyOpen ? lockScroll() : unlockScroll();
+    }).observe(el, { attributes: true, attributeFilter: ["class"] });
+  };
+  observe(settingsModal);
+  observe(historyPanel);
+})();

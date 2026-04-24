@@ -587,6 +587,27 @@
           </div>
           <p class="setting-hint">Light vibration on copy and swap actions.</p>
         </div>
+
+        <!-- Option: hide hero banner -->
+        <div class="setting-group">
+          <label class="setting-label">🏷 Hero banner</label>
+          <div class="setting-options" id="heroOptions">
+            <button class="opt-btn active" data-hero="show">Show</button>
+            <button class="opt-btn" data-hero="hide">Hide</button>
+          </div>
+          <p class="setting-hint">Hide the "Translate instantly" title banner.</p>
+        </div>
+
+        <!-- Option: rich copy preserves bold / italic on paste -->
+        <div class="setting-group">
+          <label class="setting-label">📋 Rich copy</label>
+          <div class="setting-options" id="richCopyOptions">
+            <button class="opt-btn" data-richcopy="on">HTML (bold/italic)</button>
+            <button class="opt-btn active" data-richcopy="off">Plain text</button>
+          </div>
+          <p class="setting-hint">When ON, pasting keeps bold/italic/underline formatting.</p>
+        </div>
+
         <!-- Keyboard shortcuts reference -->
         <div class="setting-group">
           <label class="setting-label">⌨ Keyboard Shortcuts</label>
@@ -637,28 +658,37 @@
   <!-- ══════════════════════════════════════════
        MOBILE BOTTOM ACTION BAR
   ══════════════════════════════════════════ -->
-  <div class="mobile-bottom-bar" id="mobileBottomBar">
-    <button class="mobile-bar-btn" id="mobileSwapBtn" title="Swap languages" aria-label="Swap languages">
+  <nav class="mobile-bottom-bar" id="mobileBottomBar" aria-label="Mobile actions">
+    <!-- History -->
+    <button class="mobile-bar-btn" id="mobileHistoryBtn" aria-label="History">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+      <span>History</span>
+    </button>
+    <!-- Swap — center prominent button -->
+    <button class="mobile-bar-btn mobile-bar-btn--swap" id="mobileSwapBtn" aria-label="Swap languages">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-        <path d="M8 3L4 7l4 4M4 7h16"/><path d="M16 21l4-4-4-4M20 17H4"/>
+        <path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
       </svg>
       <span>Swap</span>
     </button>
-    <button class="mobile-bar-btn" id="mobileCopyBtn" title="Copy translation" aria-label="Copy translation">
+    <!-- Copy -->
+    <button class="mobile-bar-btn" id="mobileCopyBtn" aria-label="Copy translation">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
       </svg>
       <span>Copy</span>
     </button>
-    <button class="mobile-bar-btn" id="mobileShareBtn" title="Share translation" aria-label="Share translation">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+    <!-- Settings -->
+    <button class="mobile-bar-btn" id="mobileSettingsBtn" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg>
-      <span>Share</span>
+      <span>Settings</span>
     </button>
-  </div>
+  </nav>
 
   <script src="app.js"></script>
 </body>
