@@ -3210,14 +3210,7 @@ kbd {
 /* ──────────────────────────────────────────
    MOBILE LAYOUT — Stack panels vertically on small screens
 ────────────────────────────────────────── */
-@media (max-width: 700px) {
-  .translator-wrap {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: .65rem;
-    padding: 0 .75rem;
-    margin-bottom: 5rem;
-  }
+
   .panel--source, .panel--target { width: 100%; min-width: 0; }
   .swap-wrap { order: 2; display: flex; justify-content: center; align-items: center; padding: .1rem 0; }
   .panel--source { order: 1; }
@@ -3236,17 +3229,6 @@ kbd {
   .btn-divider { display: none; }
   .focus-close-btn { top: -.5rem; right: .75rem; }
   .install-banner { flex-direction: column; align-items: center; gap: .4rem; text-align: center; padding: .65rem 1rem; font-size: .74rem; }
-}
-
-/* ──────────────────────────────────────────
-   TABLET BREAKPOINT (701px – 900px)
-────────────────────────────────────────── */
-@media (min-width: 701px) and (max-width: 900px) {
-  .translator-wrap { padding: 0 .85rem; gap: 0; }
-  #sourceText, .target-output { min-height: 200px; }
-  .icon-btn--small { padding: .28rem; }
-  .icon-btn--small svg { width: 14px; height: 14px; }
-  .btn-divider { display: none; }
 }
 
 /* ──────────────────────────────────────────
@@ -3556,62 +3538,6 @@ kbd {
   }
 }
 
-/* ──────────────────────────────────────────
-   SWAP BUTTON — centred on mobile (override patch padding)
-────────────────────────────────────────── */
-@media (max-width: 700px) {
-  .swap-wrap {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    padding: .35rem 0 !important;
-    width: 100% !important;
-  }
-
-  /* The inline swap button in the translator layout */
-  .swap-btn {
-    margin: 0 auto;
-    display: flex;
-  }
-}
-
-/* ──────────────────────────────────────────
-   COMPACT LAYOUT — no scrolling needed
-   Hero is hidden by default on mobile;
-   panels fill the viewport cleanly.
-────────────────────────────────────────── */
-@media (max-width: 700px) {
-  /* Make the app fill viewport height */
-  body {
-    min-height: 100dvh;
-  }
-  .translator-wrap {
-    /* panels fill remaining height after header */
-    flex: 1;
-  }
-
-  /* Source textarea: fills available space */
-  #sourceText {
-    min-height: 150px !important;
-    max-height: 35dvh;
-    resize: none;
-  }
-
-  /* Target output: fills remaining space */
-  .target-output {
-    min-height: 140px !important;
-    max-height: 35dvh;
-  }
-
-  /* Panel: don't add extra padding */
-  .panel {
-    flex-shrink: 0;
-  }
-
-  /* If hero is visible, make it very compact */
-  .hero:not(.dismissed) {
-    padding: .6rem .75rem .4rem !important;
-  }
   .hero-title {
     font-size: clamp(1.3rem, 6vw, 1.8rem) !important;
     margin: 0 !important;
@@ -3633,66 +3559,94 @@ kbd {
 }
 
 
-/* ──────────────────────────────────────────
-   HERO HIDDEN — keep panels vertically centred
-   When hero is dismissed, the translator-wrap
-   expands to fill the remaining viewport height
-   and centres the panels.
-────────────────────────────────────────── */
 
-/* Body becomes a flex column so the translator can grow */
-body {
-  display: flex;
-  flex-direction: column;
-}
+/* ═══════════════════════════════════════════════════════════════
+   LAYOUT FIXES v3.3 — Minimal, non-breaking
+═══════════════════════════════════════════════════════════════ */
 
-/* Site header stays at top, never grows */
-.site-header {
-  flex-shrink: 0;
-}
-
-/* The main content area fills remaining space */
-main.translator-wrap,
-.translator-wrap {
-  flex: 1;           /* grows to fill space */
-  align-self: stretch;
-}
-
-/* Default: panels aligned to start (hero pushes them down naturally) */
-.translator-wrap {
-  align-items: start;
-}
-
-/* When hero is gone: vertically centre the panels */
-body:has(.hero.dismissed) .translator-wrap {
-  align-items: center;  /* vertical centering for the grid rows */
-  margin-top: auto;
-  margin-bottom: auto;
-}
-
-/* Also reduce top margin since hero space is collapsed */
-body:has(.hero.dismissed) .translator-wrap {
-  margin-top: 0;
-  margin-bottom: 0;
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-}
-
-/* The hero collapse: fully remove space when dismissed */
+/* ── 1. HERO dismissed: collapse space, panels stay centred ── */
 .hero.dismissed {
   height: 0 !important;
   padding: 0 !important;
   margin: 0 !important;
   overflow: hidden !important;
   opacity: 0;
-  visibility: hidden;
   pointer-events: none;
+  visibility: hidden;
 }
 
-/* Mobile: same centring behaviour */
+/* ── 2. MOBILE: vertical stack, swap centred ── */
 @media (max-width: 700px) {
-  body:has(.hero.dismissed) .translator-wrap {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+  .translator-wrap {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: .65rem;
+    padding: .75rem .75rem 5.5rem;
   }
+
+  .panel--source { order: 1; }
+  .swap-wrap     { order: 2; }
+  .panel--target { order: 3; }
+
+  .swap-wrap {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: .2rem 0 !important;
+    width: 100% !important;
+  }
+  .swap-btn { margin: 0 auto; width: 46px; height: 46px; }
+  .swap-icon-h { display: none !important; }
+  .swap-icon-v { display: block !important; }
+
+  #sourceText {
+    min-height: 160px !important;
+    max-height: 38dvh;
+    font-size: 16px !important;
+    resize: none;
+  }
+  .target-output {
+    min-height: 150px !important;
+    max-height: 38dvh;
+  }
+
+  .panel-header { flex-wrap: wrap; gap: .3rem; padding: .5rem .75rem; }
+  .panel-actions { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; gap: .15rem; }
+  .panel-actions::-webkit-scrollbar { display: none; }
+  .panel-header select, .panel-header .cselect-btn { max-width: 140px; font-size: 16px !important; }
+  .panel-footer { flex-wrap: wrap; gap: .3rem; padding: .4rem .75rem; }
+
+  .hero:not(.dismissed) { padding: .6rem .75rem .3rem !important; }
+  .hero-title { font-size: clamp(1.3rem, 6vw, 1.8rem) !important; margin: 0 !important; }
+
+  .btn-label   { display: none !important; }
+  .btn-divider { display: none; }
+
+  .modal-box { max-height: calc(100dvh - 2rem); width: calc(100vw - 1.5rem); }
+  .history-panel { width: 100vw !important; border-radius: 0 !important; }
+  .spell-panel { max-height: 150px; overflow-y: auto; }
+  .spell-tooltip { max-width: calc(100vw - 1.5rem); left: .75rem !important; right: .75rem !important; }
 }
+
+/* ── 3. TABLET (701–980px) ── */
+@media (min-width: 701px) and (max-width: 980px) {
+  .translator-wrap { padding: 0 .85rem; }
+  .btn-label { display: none; }
+  .btn-divider { display: none; }
+}
+
+/* ── 4. iOS safe areas ── */
+.site-header {
+  padding-top: env(safe-area-inset-top);
+  height: calc(56px + env(safe-area-inset-top)) !important;
+}
+@media (max-width: 700px) {
+  .site-header { height: calc(52px + env(safe-area-inset-top)) !important; }
+}
+
+/* ── 5. Smooth iOS scroll on panels ── */
+.history-list, .modal-body, .spell-panel {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+

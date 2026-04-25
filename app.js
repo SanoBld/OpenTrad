@@ -149,126 +149,11 @@ function isApiOnCooldown(api) {
    3. i18n — Internationalisation
    Supported: fr (French) · en (English) · eu (Basque/Euskara)
 ---------------------------------------------------------- */
-const I18N = {
-  fr: {
-    historyTabAll:    "Récent",
-    historyTabFav:    "⭐ Favoris",
-    favEmpty:         "Aucun favori enregistré.",
-    heroTitle:        "Traduisez",
-    heroAccent:       " instantanément",
-    heroSub:          "Correction orthographique · Triple API · Hors-ligne · Glisser-déposer",
-    sourcePlaceholder:"Saisissez ou glissez un fichier ici…",
-    targetPlaceholder:"La traduction apparaîtra ici…",
-    translating:      "Traduction…",
-    history:          "Historique",
-    historyTitle:     "10 dernières traductions",
-    clearHistory:     "Tout effacer",
-    historyEmpty:     "Aucune traduction enregistrée.",
-    settingsHeading:  "Paramètres",
-    settingsLang:     "Langue de l'interface",
-    settingsTheme:    "Style de l'interface",
-    settingsDark:     "Mode sombre",
-    settingsAccent:   "Couleur d'accentuation",
-    modeLight:        "Clair",
-    modeDark:         "Sombre",
-    modeAuto:         "Auto (système)",
-    connected:        "Connecté",
-    connRestored:     "Connexion rétablie",
-    connLost:         "Connexion perdue",
-    offline:          "Hors-ligne",
-    installMsg:       "📲 Installer OpenTrad comme application",
-    install:          "Installer",
-    ocrLoading:       "Extraction…",
-    ocrDone:          "Extrait !",
-    allApiFailed:     "Tous les services de traduction sont indisponibles. Réessayez plus tard.",
-    settingsApi:      "API de traduction",
-    settingsApiHint:  "En mode Auto, l'application essaie chaque service l'un après l'autre si le précédent échoue.",
-    justNow:          "À l'instant",
-    minutesAgo:       (m) => `Il y a ${m} min`,
-    hoursAgo:         (h) => `Il y a ${h} h`,
-    daysAgo:          (d) => `Il y a ${d} j`,
-  },
-  en: {
-    historyTabAll:    "Recent",
-    historyTabFav:    "⭐ Favorites",
-    favEmpty:         "No favorites yet.",
-    heroTitle:        "Translate",
-    heroAccent:       " instantly",
-    heroSub:          "Spell check · Triple API · Offline · Drag & drop",
-    sourcePlaceholder:"Type or drop a file here…",
-    targetPlaceholder:"Translation will appear here…",
-    translating:      "Translating…",
-    history:          "History",
-    historyTitle:     "Last 10 translations",
-    clearHistory:     "Clear all",
-    historyEmpty:     "No translations saved.",
-    settingsHeading:  "Settings",
-    settingsLang:     "Interface Language",
-    settingsTheme:    "Interface Style",
-    settingsDark:     "Dark Mode",
-    settingsAccent:   "Accent Color",
-    modeLight:        "Light",
-    modeDark:         "Dark",
-    modeAuto:         "Auto (system)",
-    connected:        "Connected",
-    connRestored:     "Connection restored",
-    connLost:         "Connection lost",
-    offline:          "Offline",
-    installMsg:       "📲 Install OpenTrad as an app",
-    install:          "Install",
-    ocrLoading:       "Extracting…",
-    ocrDone:          "Extracted!",
-    allApiFailed:     "All translation services are unavailable. Try again later.",
-    settingsApi:      "Translation API",
-    settingsApiHint:  "In Auto mode, the app tries each service one after another if the previous one fails.",
-    justNow:          "Just now",
-    minutesAgo:       (m) => `${m}min ago`,
-    hoursAgo:         (h) => `${h}h ago`,
-    daysAgo:          (d) => `${d}d ago`,
-  },
-  eu: {
-    historyTabAll:    "Azkenak",
-    historyTabFav:    "⭐ Gogokoak",
-    favEmpty:         "Ez dago gogoko itzulpenik.",
-    heroTitle:        "Itzuli",
-    heroAccent:       " berehala",
-    heroSub:          "Ortografia · Triple API · Lineaz kanpo · Arrastatu",
-    sourcePlaceholder:"Idatzi edo utzi fitxategi bat hemen…",
-    targetPlaceholder:"Itzulpena hemen agertuko da…",
-    translating:      "Itzultzen…",
-    history:          "Historia",
-    historyTitle:     "Azken 10 itzulpenak",
-    clearHistory:     "Dena garbitu",
-    historyEmpty:     "Ez dago itzulpenik gordeta.",
-    settingsHeading:  "Ezarpenak",
-    settingsLang:     "Interfazearen hizkuntza",
-    settingsTheme:    "Interfaze estiloa",
-    settingsDark:     "Modu iluna",
-    settingsAccent:   "Azpimarkatze-kolorea",
-    modeLight:        "Argia",
-    modeDark:         "Iluna",
-    modeAuto:         "Automatiko",
-    connected:        "Konektatuta",
-    connRestored:     "Konexioa berrezarri da",
-    connLost:         "Konexioa galdu da",
-    offline:          "Lineaz kanpo",
-    installMsg:       "📲 Instalatu OpenTrad aplikazio gisa",
-    install:          "Instalatu",
-    ocrLoading:       "Ateratzen…",
-    ocrDone:          "Ateratzeko!",
-    allApiFailed:     "Itzulpen zerbitzu guztiak ez daude erabilgarri. Saiatu berriro geroago.",
-    settingsApi:      "Itzulpen API",
-    settingsApiHint:  "Auto moduan, aplikazioak zerbitzu bakoitza saiatzen du aurreko batek huts egiten badu.",
-    justNow:          "Oraintxe",
-    minutesAgo:       (m) => `Duela ${m} min`,
-    hoursAgo:         (h) => `Duela ${h} ordu`,
-    daysAgo:          (d) => `Duela ${d} egun`,
-  },
-};
+// I18N and detectLang are loaded from i18n.js
 
 /** Apply i18n strings to all [data-i18n] elements */
 function applyI18n(lang) {
-  const t = I18N[lang] || I18N.fr;
+  const t = I18N[lang] || I18N.en;
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.dataset.i18n;
     if (typeof t[key] === "string") el.textContent = t[key];
@@ -276,9 +161,7 @@ function applyI18n(lang) {
   sourceText.placeholder = t.sourcePlaceholder;
   const hint = targetText.querySelector(".placeholder-hint");
   if (hint) hint.textContent = t.targetPlaceholder;
-  // Properly map all supported UI languages to BCP-47 codes
-  const langMap = { fr: "fr", en: "en", eu: "eu" };
-  document.documentElement.lang = langMap[lang] || lang;
+  document.documentElement.lang = lang;
 }
 
 /* ----------------------------------------------------------
@@ -387,7 +270,7 @@ function syncSettingsUI() {
   const prefs      = loadPrefs();
   const themeStyle = prefs.themeStyle || "light";
   const darkMode   = prefs.darkMode   || "light";
-  const lang       = prefs.lang       || "fr";
+  const lang       = prefs.lang       || detectLang();
   const accent     = prefs.accent     || "";
 
   // Language buttons
@@ -579,7 +462,7 @@ function showConnToast(type, msg, autohide = false) {
 /** Get translated strings for connection messages */
 function getConnStrings() {
   const prefs = loadPrefs();
-  return I18N[prefs.lang || "fr"] || I18N.fr;
+  return I18N[prefs.lang || detectLang()] || I18N.en;
 }
 
 /** Called on page load */
@@ -663,7 +546,7 @@ function hideLoading() {
   const sk = targetText.querySelector(".skeleton-wrap");
   if (sk) {
     const prefs = loadPrefs();
-    const t     = I18N[prefs.lang || "fr"] || I18N.fr;
+    const t     = I18N[prefs.lang || detectLang()] || I18N.en;
     targetText.innerHTML = `<span class="placeholder-hint">${t.targetPlaceholder}</span>`;
   }
 }
@@ -761,7 +644,7 @@ async function translateLibre(text, from, to) {
 async function translate() {
   const text = sourceText.value.trim();
   const prefs = loadPrefs();
-  const t     = I18N[prefs.lang || "fr"] || I18N.fr;
+  const t     = I18N[prefs.lang || detectLang()] || I18N.en;
 
   if (!text) {
     targetText.innerHTML = `<span class="placeholder-hint">${t.targetPlaceholder}</span>`;
@@ -864,7 +747,7 @@ swapBtn.addEventListener("click", () => {
 
   const currentTranslation = targetText.textContent.trim();
   const prefs = loadPrefs();
-  const t     = I18N[prefs.lang || "fr"] || I18N.fr;
+  const t     = I18N[prefs.lang || detectLang()] || I18N.en;
   if (currentTranslation && currentTranslation !== t.targetPlaceholder) {
     sourceText.value = currentTranslation;
     targetText.innerHTML = `<span class="placeholder-hint">${t.targetPlaceholder}</span>`;
@@ -889,7 +772,7 @@ swapBtn.addEventListener("click", () => {
 ---------------------------------------------------------- */
 clearBtn.addEventListener("click", () => {
   const prefs = loadPrefs();
-  const t     = I18N[prefs.lang || "fr"] || I18N.fr;
+  const t     = I18N[prefs.lang || detectLang()] || I18N.en;
   sourceText.value = "";
   targetText.innerHTML = `<span class="placeholder-hint">${t.targetPlaceholder}</span>`;
   updateCharCount(); clearError(); hideBadge();
@@ -911,7 +794,7 @@ const CHECK_ICON_SVG = `<polyline points="20 6 9 17 4 12" stroke-linecap="round"
 copyBtn.addEventListener("click", async () => {
   const text = targetText.textContent.trim();
   const prefs = loadPrefs();
-  const t     = I18N[prefs.lang || "fr"] || I18N.fr;
+  const t     = I18N[prefs.lang || detectLang()] || I18N.en;
   if (!text || text === t.targetPlaceholder) return;
 
   try {
@@ -1272,7 +1155,7 @@ favBtn.addEventListener("click", () => {
 
 function timeAgo(iso) {
   const prefs = loadPrefs();
-  const t     = I18N[prefs.lang || "fr"] || I18N.fr;
+  const t     = I18N[prefs.lang || detectLang()] || I18N.en;
   const diff  = Date.now() - new Date(iso).getTime();
   const s = Math.floor(diff / 1000);
   if (s < 60)         return t.justNow;
@@ -1294,7 +1177,7 @@ function renderHistory() {
   historyList.innerHTML = "";
 
   const prefs = loadPrefs();
-  const t = I18N[prefs.lang || "fr"] || I18N.fr;
+  const t = I18N[prefs.lang || detectLang()] || I18N.en;
 
   // Filter by active tab
   let items = history;
@@ -1805,7 +1688,7 @@ async function handleImageOcr(file) {
 /** Show/hide OCR progress indicator */
 function showOcrStatus(active) {
   const prefs = loadPrefs();
-  const t     = I18N[prefs.lang || "fr"] || I18N.fr;
+  const t     = I18N[prefs.lang || detectLang()] || I18N.en;
   ocrStatus.classList.toggle("visible", active);
   if (active) ocrStatus.textContent = t.ocrLoading;
   else        ocrStatus.textContent = "";
@@ -1830,7 +1713,7 @@ function loadTextIntoSource(content) {
 shareBtn.addEventListener("click", async () => {
   const text  = targetText.textContent.trim();
   const prefs = loadPrefs();
-  const t     = I18N[prefs.lang || "fr"] || I18N.fr;
+  const t     = I18N[prefs.lang || detectLang()] || I18N.en;
   if (!text || text === t.targetPlaceholder) return;
 
   if (navigator.share) {
@@ -2153,7 +2036,9 @@ setInterval(applyTimeBasedTheme, 5 * 60 * 1000);
 
 function init() {
   const prefs = loadPrefs();
-  const lang  = prefs.lang || "fr";
+  // Auto-detect UI language on first visit; fall back to saved pref
+  const lang = prefs.lang || detectLang();
+  if (!prefs.lang) savePrefs({ lang });
 
   initTheme();        // Apply theme + accent from prefs
   applyI18n(lang);    // Apply i18n strings
@@ -2430,7 +2315,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Copy — write plain or rich text to clipboard
   mobileCopyBtn?.addEventListener("click", async () => {
     const prefs = loadPrefs();
-    const t     = I18N[prefs.lang || "fr"] || I18N.fr;
+    const t     = I18N[prefs.lang || detectLang()] || I18N.en;
     const rawText = targetText.textContent.trim();
     if (!rawText || rawText === t.targetPlaceholder) return;
 
@@ -2486,7 +2371,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (prefs.richcopy !== "on") return; // let original handler run
     e.stopImmediatePropagation();
 
-    const t       = I18N[prefs.lang || "fr"] || I18N.fr;
+    const t       = I18N[prefs.lang || detectLang()] || I18N.en;
     const rawText = targetText.textContent.trim();
     if (!rawText || rawText === t.targetPlaceholder) return;
 

@@ -17,6 +17,7 @@ const PRECACHE_URLS = [
   "/OpenTrad/index.html",
   "/OpenTrad/style.css",
   "/OpenTrad/app.js",
+  "/OpenTrad/i18n.js",
   "/OpenTrad/manifest.json",
   "/OpenTrad/LogoC.png",
   // Google Fonts CSS (font binaries are cached at runtime via cacheFirst)
